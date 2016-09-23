@@ -15,8 +15,6 @@
  */
 package com.netflix.archaius.guice;
 
-import java.util.Properties;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
@@ -26,6 +24,8 @@ import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.config.MapConfig;
+
+import java.util.Properties;
 
 /**
  * Guice Module for enabling archaius and making its components injectable.  Installing this
@@ -68,13 +68,8 @@ import com.netflix.archaius.config.MapConfig;
  * </code>
  */
 public class ArchaiusModule extends AbstractModule {
-    @Deprecated
-    private Class<? extends CascadeStrategy> cascadeStrategy = null;
-
-    @Deprecated
+    private Class<? extends CascadeStrategy> cascadeStrategy;
     private Config applicationOverride;
-    
-    @Deprecated
     private String configName;
     
     @Deprecated
@@ -103,6 +98,7 @@ public class ArchaiusModule extends AbstractModule {
         return this;
     }
     
+    @Deprecated
     protected void configureArchaius() {
     }
     
@@ -121,6 +117,7 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
+    @Deprecated
     protected LinkedBindingBuilder<String> bindConfigurationName() {
         return bind(String.class).annotatedWith(Names.named(InternalArchaiusModule.CONFIG_NAME_KEY));
     }
@@ -142,6 +139,7 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
+    @Deprecated
     protected LinkedBindingBuilder<Config> bindApplicationConfigurationOverride() {
         return bind(Config.class).annotatedWith(ApplicationOverride.class);
     }
@@ -160,6 +158,7 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
+    @Deprecated
     protected LinkedBindingBuilder<Config> bindRemoteConfig() {
         return bind(Config.class).annotatedWith(RemoteLayer.class);
     }
@@ -179,6 +178,7 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
+    @Deprecated
     protected LinkedBindingBuilder<CascadeStrategy> bindCascadeStrategy() {
         return bind(CascadeStrategy.class);
     }
@@ -198,6 +198,7 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
+    @Deprecated
     protected LinkedBindingBuilder<Config> bindDefaultConfig() {
         return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
     }
@@ -217,6 +218,7 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
+    @Deprecated
     protected LinkedBindingBuilder<Config> bindConfigReader() {
         return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
     }
@@ -235,6 +237,7 @@ public class ArchaiusModule extends AbstractModule {
      *
      * @return
      */
+    @Deprecated
     protected void bindApplicationConfigurationOverrideResource(String overrideResource)  {
         Multibinder.newSetBinder(binder(), String.class, ApplicationOverrideResources.class).permitDuplicates().addBinding().toInstance(overrideResource);
     }

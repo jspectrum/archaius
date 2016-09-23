@@ -15,6 +15,10 @@
  */
 package com.netflix.archaius;
 
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.MatchingDecoder;
+import com.netflix.archaius.exceptions.ParseException;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -29,20 +33,21 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.Period;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.xml.bind.DatatypeConverter;
-
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.exceptions.ParseException;
 
 /**
  * @author Spencer Gibb
@@ -51,6 +56,8 @@ import com.netflix.archaius.exceptions.ParseException;
 public class DefaultDecoder implements Decoder {
     private Map<Class<?>, Function<String, ?>> decoderRegistry;
 
+    private final List<MatchingDecoder> extra;
+    
     public static DefaultDecoder INSTANCE = new DefaultDecoder();
     
     {
@@ -97,6 +104,14 @@ public class DefaultDecoder implements Decoder {
         decoderRegistry.put(BitSet.class, v->BitSet.valueOf(DatatypeConverter.parseHexBinary(v)));
     }
     
+    @Inject
+    public DefaultDecoder() {
+        this.extra = Collections.emptyList();
+    }
+    
+    public DefaultDecoder(List<MatchingDecoder> extra) {
+        this.extra = new ArrayList<>(extra);
+    }
     
     @SuppressWarnings("unchecked")
     @Override
@@ -117,6 +132,12 @@ public class DefaultDecoder implements Decoder {
             return (T) ar;
         }
 
+        for (MatchingDecoder decoder : extra) {
+            if (decoder.matches(type, encoded)) {
+                return decoder.decode(type, encoded);
+            }
+        }
+        
         // Next look a valueOf(String) static method
         try {
             Method method;
