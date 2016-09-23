@@ -16,6 +16,7 @@ import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
+import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,9 @@ public final class DefaultArchaiusConfigurator implements ArchaiusConfig.Configu
     
     private final List<MatchingDecoder> decoders = new ArrayList<>();
     
-    private final List<Runnable> applicationOverrideActions = new ArrayList<>();
+    private final List<Runnable> applicationLayerActions = new ArrayList<>();
+    private final List<Runnable> remoteLayerActions = new ArrayList<>();
+    private final List<Runnable> defaultLayerActions = new ArrayList<>();
 
     private String applicationName = DEFAULT_CONFIG_NAME;
     
@@ -99,22 +102,32 @@ public final class DefaultArchaiusConfigurator implements ArchaiusConfig.Configu
     }
     
     @Override
-    public Configurator addDefaultConfig(String name, Config config) {
-        defaultLayer.addConfig(name, config);
-        return this;
-    }
-
-    @Override
     public Configurator addApplicationOverrideResource(String name) {
-        applicationOverrideActions.add(() -> {
-            applicationLayer.addConfig(name, configLoader.newLoader().load(name));
-        });
+        applicationLayerActions.add(() -> applicationLayer.addConfig(name, configLoader.newLoader().load(name)));
         return this;
     }
     
     @Override
     public Configurator setApplicationName(String name) {
         this.applicationName  = name;
+        return this;
+    }
+
+    @Override
+    public Configurator addDefaultConfig(String name, Function<Config, Config> func) {
+        defaultLayerActions.add(() -> defaultLayer.addConfig(name, config));
+        return this;
+    }
+
+   @Override
+    public Configurator addApplicationOverrideConfig(String name, Function<Config, Config> func) {
+        this.applicationLayerActions.add(() -> applicationLayer.addConfig(name, func.apply(config)));
+        return this;
+    }
+
+    @Override
+    public Configurator addRemoteConfig(String name, Function<Config, Config> func) {
+        this.remoteLayerActions.add(() -> remoteLayer.addConfig(name, func.apply(config)));
         return this;
     }
 
@@ -126,9 +139,15 @@ public final class DefaultArchaiusConfigurator implements ArchaiusConfig.Configu
                 .withStrLookup(ConfigStrLookup.from(config))
                 .build();
         
-        applicationOverrideActions.forEach(action -> action.run());
+        this.addApplicationOverrideResource(applicationName);
         
-        applicationLayer.addConfig(this.applicationName, configLoader.newLoader().load(applicationName));
+        // Order here is important since we keep passing in the same config reference as it's being
+        // built.  Default first, then application, then remote.
+        defaultLayerActions.forEach(action -> action.run());
+        applicationLayerActions.forEach(action -> action.run());
+        remoteLayerActions.forEach(action -> action.run());
+
+        config.accept(new PrintStreamVisitor());
         
         return new ArchaiusConfig() {
             @Override
@@ -161,17 +180,5 @@ public final class DefaultArchaiusConfigurator implements ArchaiusConfig.Configu
                 return config.getDecoder();
             }
         };
-    }
-
-    @Override
-    public Configurator addApplicationOverrideConfig(String name, Config applicationOverride) {
-        applicationLayer.addConfig(name, applicationOverride);
-        return this;
-    }
-
-    @Override
-    public Configurator addRemoteConfig(String name, Config config) {
-        remoteLayer.addConfig(name, config);
-        return this;
     }
 }

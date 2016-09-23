@@ -120,19 +120,19 @@ final class InternalArchaiusModule extends AbstractModule {
     Consumer<Configurator> getCoreConfigurator(ConfigParameters params) throws Exception {
         return configurator -> {
             params.getDefaultConfigs()
-                .forEach(config -> configurator.addDefaultConfig(getUniqueName("default"), config));
+                .forEach(config -> configurator.addDefaultConfig(getUniqueName("default"), rawConfig -> config));
             
             params.getOverrideResources()
                 .forEach(resource -> configurator.addApplicationOverrideResource(resource));
             
             params.getApplicationOverride()
-                .ifPresent(config -> configurator.addApplicationOverrideConfig(getUniqueName("override"), config));
+                .ifPresent(config -> configurator.addApplicationOverrideConfig(getUniqueName("override"), rawConfig -> config));
             
             params.getConfigName()
                 .ifPresent(name -> configurator.setApplicationName(name));
             
             params.getRemoteLayer().map(Provider::get)
-                .ifPresent(config -> configurator.addRemoteConfig(getUniqueName("remote"), config));
+                .ifPresent(config -> configurator.addRemoteConfig(getUniqueName("remote"), rawConfig -> config));
             
             params.getCascadeStrategy()
                 .ifPresent(strategy -> configurator.setCascadeStrategy(strategy));
@@ -149,14 +149,6 @@ final class InternalArchaiusModule extends AbstractModule {
     @Provides
     @Singleton
     Config getConfiguration(ArchaiusConfig config) {
-        return config.getConfig();
-    }
-    
-    @Provides
-    @Singleton
-    @Raw
-    @Deprecated
-    Config getRawConfiguration(ArchaiusConfig config) {
         return config.getConfig();
     }
     

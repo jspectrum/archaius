@@ -1,5 +1,6 @@
 package com.netflix.archaius.api;
 
+import com.netflix.archaius.api.ArchaiusConfig.Configurator;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
 
@@ -41,7 +42,7 @@ public interface ArchaiusConfig {
          * @param config
          * @return Chainable configurator
          */
-        Configurator addDefaultConfig(String name, Config config);
+        Configurator addDefaultConfig(String name, Function<Config, Config> config);
 
         /**
          * Add a configuration to the runtime override layer
@@ -72,7 +73,7 @@ public interface ArchaiusConfig {
          * @param applicationOverride
          * @return Chainable configurator
          */
-        Configurator addApplicationOverrideConfig(String uniqueName, Config applicationOverride);
+        Configurator addApplicationOverrideConfig(String uniqueName, Function<Config, Config> applicationOverride);
 
         /**
          * Add a configuratino to the remove layer override
@@ -80,7 +81,7 @@ public interface ArchaiusConfig {
          * @param config
          * @return
          */
-        Configurator addRemoteConfig(String uniqueName, Config config);
+        Configurator addRemoteConfig(String uniqueName, Function<Config, Config> config);
     }
     
     /**
