@@ -82,7 +82,7 @@ public class ConfigurationInjectingListener implements ProvisionListener {
             try {
                 mapper.mapConfig(provision.provision(), config, new IoCContainer() {
                     @Override
-                    public <T> T getInstance(String name, Class<T> type) {
+                    public <S> S getInstance(String name, Class<S> type) {
                         return injector.getInstance(Key.get(type, Names.named(name)));
                     }
                 });
