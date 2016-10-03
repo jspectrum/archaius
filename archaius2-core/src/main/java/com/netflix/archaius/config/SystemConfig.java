@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.config;
 
+import com.netflix.archaius.api.DataNode;
+
 import java.util.Iterator;
 
 public class SystemConfig extends AbstractConfig {
@@ -56,5 +58,10 @@ public class SystemConfig extends AbstractConfig {
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    @Override
+    public DataNode child(String name) {
+        return null;
     }
 }

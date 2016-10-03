@@ -15,22 +15,26 @@
  */
 package com.netflix.archaius.config;
 
+import com.netflix.archaius.SortedMapChildNode;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.config.CompositeConfig;
+import com.netflix.archaius.api.exceptions.ConfigException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.exceptions.ConfigException;
 
 /**
  * Config that is a composite of multiple configuration and as such doesn't track 
@@ -39,18 +43,15 @@ import com.netflix.archaius.api.exceptions.ConfigException;
  * the same property in configuration that was added later.  It is however possible
  * to set a flag that reverses the override order.
  * 
- * @author elandau
- *
  * TODO: Optional cache of queried properties
  * TODO: Resolve method to collapse all the child configurations into a single config
  * TODO: Combine children and lookup into a single LinkedHashMap
  */
-public class DefaultCompositeConfig extends AbstractConfig implements com.netflix.archaius.api.config.CompositeConfig {
+public class DefaultCompositeConfig extends AbstractConfig implements CompositeConfig {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCompositeConfig.class);
     
     /**
      * The builder provides a fluent style API to create a CompositeConfig
-     * @author elandau
      */
     public static class Builder {
         LinkedHashMap<String, Config> configs = new LinkedHashMap<>();
@@ -60,8 +61,8 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
             return this;
         }
         
-        public com.netflix.archaius.api.config.CompositeConfig build() throws ConfigException {
-            com.netflix.archaius.api.config.CompositeConfig config = new DefaultCompositeConfig();
+        public CompositeConfig build() throws ConfigException {
+            CompositeConfig config = new DefaultCompositeConfig();
             for (Entry<String, Config> entry : configs.entrySet()) {
                 config.addConfig(entry.getKey(), entry.getValue());
             }
@@ -73,14 +74,23 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         return new Builder();
     }
     
-    public static com.netflix.archaius.api.config.CompositeConfig create() throws ConfigException {
+    public static CompositeConfig create() throws ConfigException {
         return DefaultCompositeConfig.builder().build();
     }
     
-    private final CopyOnWriteArrayList<Config>  children  = new CopyOnWriteArrayList<Config>();
-    private final Map<String, Config>           lookup    = new LinkedHashMap<String, Config>();
-    private final ConfigListener                listener;
-    private final boolean                       reversed;
+    public static CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
+        Builder builder = builder();
+        for (Entry<String, Config> config : load.entrySet()) {
+            builder.withConfig(config.getKey(), config.getValue());
+        }
+        return builder.build();
+    }
+    
+    private final CopyOnWriteArrayList<Config> children = new CopyOnWriteArrayList<Config>();
+    private final Map<String, Config> lookup = new LinkedHashMap<String, Config>();
+    private final ConfigListener listener;
+    private final boolean reversed;
+    private volatile SortedMap<String, DataNode> values = new TreeMap<>();
     
     public DefaultCompositeConfig() {
         this(false);
@@ -92,16 +102,19 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
             @Override
             public void onConfigAdded(Config config) {
                 notifyConfigAdded(DefaultCompositeConfig.this);
+                rebuildValueMap();
             }
 
             @Override
             public void onConfigRemoved(Config config) {
                 notifyConfigRemoved(DefaultCompositeConfig.this);
+                rebuildValueMap();
             }
 
             @Override
             public void onConfigUpdated(Config config) {
                 notifyConfigUpdated(DefaultCompositeConfig.this);
+                rebuildValueMap();
             }
 
             @Override
@@ -136,11 +149,13 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         lookup.put(name, child);
         if (reversed) {
             children.add(0, child);
-        }
-        else {
+        } else {
             children.add(child);
         }
         postConfigAdded(child);
+        
+        rebuildValueMap();
+        
         return true;
     }
 
@@ -160,13 +175,10 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public synchronized Collection<String> getConfigNames() {
-        List<String> result = new ArrayList<String>();
-        result.addAll(this.lookup.keySet());
-        return result;
+        return new ArrayList<String>(this.lookup.keySet());
     }
     
     protected void postConfigAdded(Config child) {
-        child.setStrInterpolator(getStrInterpolator());
         child.setDecoder(getDecoder());
         notifyConfigAdded(child);
         child.addListener(listener);
@@ -202,16 +214,12 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public Object getRawProperty(String key) {
-        for (Config child : children) {
-            if (child.containsKey(key)) {
-                return child.getRawProperty(key);
-            }
-        }
-        return null;
+        return values.get(key).value();
     }
 
     @Override
     public <T> List<T> getList(String key, Class<T> type) {
+        // TODO: Use values
         for (Config child : children) {
             if (child.containsKey(key)) {
                 return child.getList(key, type);
@@ -222,6 +230,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public List getList(String key) {
+        // TODO: Use values
         for (Config child : children) {
             if (child.containsKey(key)) {
                 return child.getList(key);
@@ -232,24 +241,12 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
 
     @Override
     public boolean containsKey(String key) {
-        for (Config child : children) {
-            if (child.containsKey(key)) {
-                return true;
-            }
-        }
-        
-        return false;
+        return values.containsKey(key);
     }
 
     @Override
     public boolean isEmpty() {
-        for (Config child : children) {
-            if (!child.isEmpty()) {
-                return false;
-            }
-        }
-        
-        return true;
+        return values.isEmpty();
     }
 
     /**
@@ -261,15 +258,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
      */
     @Override
     public Iterator<String> getKeys() {
-        HashSet<String> result = new HashSet<>();
-        for (Config config : children) {
-            Iterator<String> iter = config.getKeys();
-            while (iter.hasNext()) {
-               String key = iter.next();
-                result.add(key);
-            }
-        }
-        return result.iterator();
+        return values.keySet().iterator();
     }
     
     @Override
@@ -291,14 +280,61 @@ public class DefaultCompositeConfig extends AbstractConfig implements com.netfli
         return result;
     }
 
-    public static com.netflix.archaius.api.config.CompositeConfig from(LinkedHashMap<String, Config> load) throws ConfigException {
-        Builder builder = builder();
-        for (Entry<String, Config> config : load.entrySet()) {
-            builder.withConfig(config.getKey(), config.getValue());
-        }
-        return builder.build();
+    private synchronized void rebuildValueMap() {
+        final SortedMap<String, DataNode> values = new TreeMap<>();
+        accept(new CompositeVisitor<Void>() {
+            @Override
+            public Void visitKey(Config config, String key) {
+                if (!values.containsKey(key)) {
+                    values.put(key, new DataNode() {
+                        @Override
+                        public Object value() { 
+                            return config.getRawProperty(key); 
+                        }
+
+                        @Override
+                        public DataNode root() {
+                            return DefaultCompositeConfig.this.root();
+                        }
+
+                        @Override
+                        public DataNode child(String name) {
+                            return null;
+                        }
+                    });
+                }
+                return null;
+            }
+
+            @Override
+            public Void visitChild(String name, Config child) {
+                child.accept(this);
+                return null;
+            }
+        });
+        this.values = values;
     }
     
+    @Override
+    public DataNode child(String name) { 
+        // Make sure we don't have any trailing '.'
+        while (name.endsWith(".")) {
+            name = name.substring(0, name.length()-1);
+        }
+        
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("prefix may not be empty or null");
+        }
+        
+        return new SortedMapChildNode(root(), values, name);
+    }
+
+    @Override
+    public DataNode root() {
+        // TODO:
+        return this;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

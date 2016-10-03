@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.config;
 
+import com.netflix.archaius.api.DataNode;
+
 import java.util.Iterator;
 import java.util.Map;
 
@@ -46,5 +48,10 @@ public class EnvironmentConfig extends AbstractConfig {
     @Override
     public Iterator<String> getKeys() {
         return properties.keySet().iterator();
+    }
+
+    @Override
+    public DataNode child(String name) {
+        return null;
     }
 }

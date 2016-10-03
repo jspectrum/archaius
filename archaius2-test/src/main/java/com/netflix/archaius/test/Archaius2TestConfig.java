@@ -14,6 +14,7 @@ import org.junit.runners.model.Statement;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.DataNode;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.config.SettableConfig;
@@ -229,16 +230,6 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     }
 
     @Override
-    public void setStrInterpolator(StrInterpolator interpolator) {
-        testCompositeConfig.setStrInterpolator(interpolator);
-    }
-
-    @Override
-    public StrInterpolator getStrInterpolator() {
-        return testCompositeConfig.getStrInterpolator();
-    }
-
-    @Override
     public void setDecoder(Decoder decoder) {
         testCompositeConfig.setDecoder(decoder);
     }
@@ -271,5 +262,17 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     @Override
     public void clearProperty(String propName) {
         testCompositeConfig.clearProperty(propName);
+    }
+
+    @Override
+    public DataNode child(String name) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public DataNode root() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

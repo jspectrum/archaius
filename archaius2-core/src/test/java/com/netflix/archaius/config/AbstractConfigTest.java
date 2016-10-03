@@ -18,6 +18,8 @@ package com.netflix.archaius.config;
 import java.util.Collections;
 import java.util.Iterator;
 
+import com.netflix.archaius.api.DataNode;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,6 +44,11 @@ public class AbstractConfigTest {
         @Override
         public Object getRawProperty(String key) {
             return "bar";
+        }
+
+        @Override
+        public DataNode child(String name) {
+            return null;
         }
     };
 

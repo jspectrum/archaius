@@ -22,10 +22,8 @@ import java.util.List;
 
 /**
  * Core API for reading a configuration.  The API is read only.
- * 
- * @author elandau
  */
-public interface Config {
+public interface Config extends DataNode {
     public interface Visitor<T> {
         T visitKey(Config config, String key);
     }
@@ -44,6 +42,10 @@ public interface Config {
      * @param listener
      */
     void removeListener(ConfigListener listener);
+
+    <T> T get(Class<T> type, String key);
+    
+    <T> T get(Class<T> type, String key, T defaultValue);
 
     /**
      * Return the raw, uninterpolated, object associated with a key.
@@ -106,32 +108,6 @@ public interface Config {
     List<?> getList(String key, List<?> defaultValue);
 
     /**
-     * Get the property from the Decoder.  All basic data types as well any type
-     * will a valueOf or String contructor will be supported.
-     * @param type
-     * @param key
-     * @return
-     */
-    <T> T get(Class<T> type, String key);
-    <T> T get(Class<T> type, String key, T defaultValue);
-    
-    /**
-     * @param key
-     * @return True if the key is contained within this or any of it's child configurations
-     */
-    boolean containsKey(String key);
-    
-    /**
-     * @return True if empty or false otherwise.
-     */
-    boolean isEmpty();
-    
-    /**
-     * @return Return an iterator to all property names owned by this config
-     */
-    Iterator<String> getKeys();
-    
-    /**
      * @return Return an interator to all prefixed property names owned by this config
      */
     Iterator<String> getKeys(String prefix);
@@ -141,15 +117,6 @@ public interface Config {
      * @return Return a subset of the configuration prefixed by a key.
      */
     Config getPrefixedView(String prefix);
-    
-    /**
-     * Set the interpolator to be used.  The interpolator is normally created from the top level
-     * configuration object and is passed down to any children as they are added.
-     * @param interpolator
-     */
-    void setStrInterpolator(StrInterpolator interpolator);
-   
-    StrInterpolator getStrInterpolator();
     
     /**
      * Set the Decoder used by get() to parse any type

@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.config;
 
+import com.netflix.archaius.api.DataNode;
+
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -42,6 +44,11 @@ public final class EmptyConfig extends AbstractConfig {
 
     @Override
     public Object getRawProperty(String key) {
+        return null;
+    }
+
+    @Override
+    public DataNode child(String name) {
         return null;
     }
 

@@ -15,68 +15,87 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
+import com.netflix.archaius.ScalarNode;
+import com.netflix.archaius.SortedMapChildNode;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.DataNode;
 import com.netflix.archaius.api.config.SettableConfig;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
-    private ConcurrentMap<String, Object> props = new ConcurrentHashMap<String, Object>();
+    private volatile SortedMap<String, DataNode> values = new TreeMap<>();
     
     @Override
-    public <T> void setProperty(String propName, T propValue) {
-        props.put(propName, propValue);
+    public synchronized <T> void setProperty(String key, T value) {
+        values.put(key, ScalarNode.from(value, this));
         notifyConfigUpdated(this);
     }
     
     @Override
-    public void clearProperty(String propName) {
-        props.remove(propName);
+    public synchronized void clearProperty(String key) {
+        values.remove(key);
         notifyConfigUpdated(this);
     }
 
     @Override
-    public boolean containsKey(String key) {
-        return props.containsKey(key);
+    public synchronized boolean containsKey(String key) {
+        return values.containsKey(key);
     }
 
     @Override
-    public boolean isEmpty() {
-        return props.isEmpty();
+    public synchronized boolean isEmpty() {
+        return values.isEmpty();
     }
 
     @Override
-    public Object getRawProperty(String key) {
-        return props.get(key);
+    public synchronized Object getRawProperty(String key) {
+        return values.get(key);
     }
     
     @Override
-    public Iterator<String> getKeys() {
-        return props.keySet().iterator();
+    public synchronized Iterator<String> getKeys() {
+        return new HashSet<>(values.keySet()).iterator();
     }
 
     @Override
-    public void setProperties(Properties properties) {
+    public synchronized void setProperties(Properties properties) {
         if (null != properties) {
-            for (Entry<Object, Object> prop : properties.entrySet()) {
-                setProperty(prop.getKey().toString(), prop.getValue());
-            }
+            properties.forEach((k, v) -> 
+                values.put(k.toString(), ScalarNode.from(v, DefaultSettableConfig.this)));
         }
     }
 
     @Override
-    public void setProperties(Config config) {
+    public synchronized void setProperties(Config config) {
         if (null != config) {
-            Iterator<String> iter = config.getKeys();
-            while (iter.hasNext()) {
-                String key = iter.next();
-                setProperty(key, config.getRawProperty(key));
-            }
+            config.accept(new Visitor<Void>() {
+                @Override
+                public Void visitKey(Config config, String key) {
+                    values.put(key, ScalarNode.from(config.getRawProperty(key), DefaultSettableConfig.this));
+                    return null;
+                }
+            });
         }
     }
 
+    @Override
+    public synchronized <T> T accept(Visitor<T> visitor) {
+        T result = null;
+        Iterator<String> iter = values.keySet().iterator();
+        while (iter.hasNext()) {
+            result = visitor.visitKey(this, iter.next());
+        }
+        return result;
+    }
+
+    @Override
+    public DataNode child(String name) {
+        // TODO: The SortedMapChildNode is not thread safe
+        return new SortedMapChildNode(root(), values, name);
+    }
 }

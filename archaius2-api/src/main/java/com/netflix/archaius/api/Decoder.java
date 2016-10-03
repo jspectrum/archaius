@@ -17,9 +17,7 @@ package com.netflix.archaius.api;
 
 /**
  * API for decoding properties to arbitrary types.
- *
- * @author spencergibb
  */
-public interface Decoder {
-	<T> T decode(Class<T> type, String encoded);
+public interface Decoder extends TypeDecoders {
+    <T> T decode(Class<T> type, String encoded);
 }

@@ -15,34 +15,27 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.DataNode;
 import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.api.StrInterpolator.Lookup;
-import com.netflix.archaius.interpolate.ConfigStrLookup;
+
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 
 /**
  * View into another Config for properties starting with a specified prefix.
  * 
  * This class is meant to work with dynamic Config object that may have properties
  * added and removed.
- * 
- * @author elandau
- *
  */
 public class PrefixedViewConfig extends AbstractConfig {
     private final Config config;
     private final String prefix;
-    private final Lookup nonPrefixedLookup;
     
     public PrefixedViewConfig(final String prefix, final Config config) {
         this.config = config;
         this.prefix = prefix.endsWith(".") ? prefix : prefix + ".";
-        this.nonPrefixedLookup = ConfigStrLookup.from(config);
     }
 
     @Override
@@ -83,35 +76,26 @@ public class PrefixedViewConfig extends AbstractConfig {
     }
     
     @Override
-    protected Lookup getLookup() { 
-        return nonPrefixedLookup; 
-    }
-
-    @Override
-    public synchronized void setDecoder(Decoder decoder)
-    {
+    public synchronized void setDecoder(Decoder decoder) {
         super.setDecoder(decoder);
         config.setDecoder(decoder);
     }
 
     @Override
-    public synchronized void setStrInterpolator(StrInterpolator interpolator)
-    {
-        super.setStrInterpolator(interpolator);
-        config.setStrInterpolator(interpolator);
-    }
-
-    @Override
-    public synchronized void addListener(ConfigListener listener)
-    {
+    public synchronized void addListener(ConfigListener listener) {
         super.addListener(listener);
         config.addListener(listener);
     }
 
     @Override
-    public synchronized void removeListener(ConfigListener listener)
-    {
+    public synchronized void removeListener(ConfigListener listener) {
         super.removeListener(listener);
         config.removeListener(listener);
+    }
+
+    @Override
+    public DataNode child(String name) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

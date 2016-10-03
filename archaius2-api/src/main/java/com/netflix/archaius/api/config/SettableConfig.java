@@ -21,9 +21,6 @@ import com.netflix.archaius.api.Config;
 
 /**
  * SPI for a config that may be set from code.
- * 
- * @author elandau
- *
  */
 public interface SettableConfig extends Config {
     /**

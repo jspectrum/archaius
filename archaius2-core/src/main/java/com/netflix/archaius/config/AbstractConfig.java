@@ -15,55 +15,34 @@
  */
 package com.netflix.archaius.config;
 
+import com.netflix.archaius.DefaultDecoder;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.exceptions.ParseException;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.DefaultDecoder;
-import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.api.StrInterpolator.Lookup;
-import com.netflix.archaius.exceptions.ParseException;
-import com.netflix.archaius.interpolate.CommonsStrInterpolator;
-import com.netflix.archaius.interpolate.ConfigStrLookup;
-
 public abstract class AbstractConfig implements Config {
 
     private final CopyOnWriteArrayList<ConfigListener> listeners = new CopyOnWriteArrayList<ConfigListener>();
-    private final Lookup lookup;
     private Decoder decoder;
-    private StrInterpolator interpolator;
-    private String listDelimiter = ",";
     
     public AbstractConfig() {
-        this.decoder = new DefaultDecoder();
-        this.interpolator = CommonsStrInterpolator.INSTANCE;
-        this.lookup = ConfigStrLookup.from(this);
+        this.decoder = DefaultDecoder.INSTANCE;
     }
 
     protected CopyOnWriteArrayList<ConfigListener> getListeners() {
         return listeners;
     }
     
-    protected Lookup getLookup() { 
-        return lookup; 
-    }
-    
-    public String getListDelimiter() {
-        return listDelimiter;
-    }
-    
-    public void setListDelimiter(String delimiter) {
-        listDelimiter = delimiter;
-    }
-
     @Override
     final public Decoder getDecoder() {
         return this.decoder;
@@ -72,16 +51,6 @@ public abstract class AbstractConfig implements Config {
     @Override
     public void setDecoder(Decoder decoder) {
         this.decoder = decoder;
-    }
-
-    @Override
-    final public StrInterpolator getStrInterpolator() {
-        return this.interpolator;
-    }
-
-    @Override
-    public void setStrInterpolator(StrInterpolator interpolator) {
-        this.interpolator = interpolator;
     }
 
     @Override
@@ -120,30 +89,12 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public String getString(String key, String defaultValue) {
-        Object value = getRawProperty(key);
-        if (value == null) {
-            return notFound(key, defaultValue != null ? interpolator.create(getLookup()).resolve(defaultValue) : null);
-        }
-
-        if (value instanceof String) {
-            return interpolator.create(getLookup()).resolve(value.toString());
-        } else {
-            return value.toString();
-        }
+        return this.getValueWithDefault(String.class, key, defaultValue);
     }
-
+    
     @Override
     public String getString(String key) {
-        Object value = getRawProperty(key);
-        if (value == null) {
-            return notFound(key);
-        }
-
-        if (value instanceof String) {
-            return interpolator.create(getLookup()).resolve(value.toString());
-        } else {
-            return value.toString();
-        }
+        return this.getValue(String.class, key);
     }
 
     /**
@@ -228,23 +179,12 @@ public abstract class AbstractConfig implements Config {
     }
 
     protected <T> T getValue(Class<T> type, String key) {
-        Object rawProp = getRawProperty(key);
+        Object rawProp = decoder.decode(type, child(key));
         if (rawProp == null) {
             return notFound(key);
         }
-        if (rawProp instanceof String) {
-            try {
-                String value = interpolator.create(getLookup()).resolve(rawProp.toString());
-                return decoder.decode(type, value);
-            } catch (NumberFormatException e) {
-                return parseError(key, rawProp.toString(), e);
-            }
-        } else if (type.isInstance(rawProp)) {
-            return (T)rawProp;
-        } else {
-            return parseError(key, rawProp.toString(),
-                    new NumberFormatException("Property " + rawProp.toString() + " is of wrong format " + type.getCanonicalName()));
-        }
+        
+        return (T)rawProp;
     }
 
     protected <T> T getValueWithDefault(Class<T> type, String key, T defaultValue) {
@@ -347,26 +287,28 @@ public abstract class AbstractConfig implements Config {
 
     @Override
     public <T> List<T> getList(String key, Class<T> type) {
-        String value = getString(key);
-        if (value == null) {
-            return notFound(key);
-        }
-        String[] parts = value.split(getListDelimiter());
-        List<T> result = new ArrayList<T>();
-        for (String part : parts) {
-            result.add(decoder.decode(type, part));
-        }
-        return result;
+//        String value = getString(key);
+//        if (value == null) {
+//            return notFound(key);
+//        }
+//        String[] parts = value.split(getListDelimiter());
+//        List<T> result = new ArrayList<T>();
+//        for (String part : parts) {
+//            result.add(decoder.decode(type, part));
+//        }
+//        return result;
+        return null;
     }
 
     @Override
     public List getList(String key) {
-        String value = getString(key);
-        if (value == null) {
-            return notFound(key);
-        }
-        String[] parts = value.split(getListDelimiter());
-        return Arrays.asList(parts);
+//        String value = getString(key);
+//        if (value == null) {
+//            return notFound(key);
+//        }
+//        String[] parts = value.split(getListDelimiter());
+//        return Arrays.asList(parts);
+        return null;
     }
 
     @Override
@@ -391,5 +333,9 @@ public abstract class AbstractConfig implements Config {
 
     private <T> T parseError(String key, String value, Exception e) {
         throw new ParseException("Error parsing value '" + value + "' for property '" + key + "'", e);
+    }
+    
+    public DataNode root() {
+        return this;
     }
 }

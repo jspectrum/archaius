@@ -15,22 +15,20 @@
  */
 package com.netflix.archaius.commons;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import com.netflix.archaius.ScalarNode;
+import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.config.AbstractConfig;
 
 import org.apache.commons.configuration.AbstractConfiguration;
-
-import com.netflix.archaius.config.AbstractConfig;
 import org.apache.commons.lang.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Adaptor to allow an Apache Commons Configuration AbstractConfig to be used
  * as an Archaius2 Config
- * 
- * @author elandau
- *
  */
 public class CommonsToConfig extends AbstractConfig {
 
@@ -94,18 +92,18 @@ public class CommonsToConfig extends AbstractConfig {
     public String getString(String key, String defaultValue) {
         List value = config.getList(key);
         if (value == null) {
-            return notFound(key, defaultValue != null ? getStrInterpolator().create(getLookup()).resolve(defaultValue) : null);
+            return notFound(key, defaultValue != null ? getDecoder().decode(String.class, ScalarNode.from(defaultValue, root())) : null);
         }
-        List<String> interpolatedResult = new ArrayList<>();
+        List<String> result = new ArrayList<>();
         for (Object part : value) {
             if (part instanceof String) {
-                interpolatedResult.add(getStrInterpolator().create(getLookup()).resolve(part.toString()));
+                result.add(getDecoder().decode(String.class, ScalarNode.from(part, root())));
             } else {
                 throw new UnsupportedOperationException(
                         "Property values other than String not supported");
             }
         }
-        return StringUtils.join(interpolatedResult, getListDelimiter());
+        return StringUtils.join(result, ",");
     }
 
     @Override
@@ -114,16 +112,20 @@ public class CommonsToConfig extends AbstractConfig {
         if (value == null) {
             return notFound(key);
         }
-        List<String> interpolatedResult = new ArrayList<>();
+        List<String> result = new ArrayList<>();
         for (Object part : value) {
             if (part instanceof String) {
-                interpolatedResult.add(getStrInterpolator().create(getLookup()).resolve(part.toString()));
+                result.add(getDecoder().decode(String.class, ScalarNode.from(part, root())));
             } else {
                 throw new UnsupportedOperationException(
                         "Property values other than String not supported");
             }
         }
-        return StringUtils.join(interpolatedResult, getListDelimiter());
+        return StringUtils.join(result, ",");
     }
 
+    @Override
+    public DataNode child(String name) {
+        return null;
+    }
 }

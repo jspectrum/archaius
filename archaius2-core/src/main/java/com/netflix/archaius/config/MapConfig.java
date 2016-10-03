@@ -15,18 +15,20 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.Collections;
-import java.util.HashMap;
+import com.netflix.archaius.ScalarNode;
+import com.netflix.archaius.SortedMapChildNode;
+import com.netflix.archaius.api.DataNode;
+
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Config backed by an immutable map.
  */
 public class MapConfig extends AbstractConfig {
-
     /**
      * The builder only provides convenience for fluent style adding of properties
      * 
@@ -38,18 +40,21 @@ public class MapConfig extends AbstractConfig {
      *      .build()
      * </pre>
      * }
-     * @author elandau
      */
     public static class Builder {
-        Map<String, String> map = new HashMap<String, String>();
+        MapConfig config = new MapConfig();
         
         public <T> Builder put(String key, T value) {
-            map.put(key, value.toString());
+            config.props.put(key, ScalarNode.from(value, config));
             return this;
         }
         
         public MapConfig build() {
-            return new MapConfig(map);
+            try {
+                return config;
+            } finally {
+                config = null;
+            }
         }
     }
     
@@ -61,20 +66,22 @@ public class MapConfig extends AbstractConfig {
         return new MapConfig(props);
     }
     
-    public static MapConfig from(Map<String, String> props) {
+    public static MapConfig from(Map<String, Object> props) {
         return new MapConfig(props);
     }
     
-    private Map<String, String> props = new HashMap<String, String>();
+    private final SortedMap<String, DataNode> props = new TreeMap<String, DataNode>();
+    
+    private MapConfig() {
+    }
     
     /**
      * Construct a MapConfig as a copy of the provided Map
      * @param name
      * @param props
      */
-    public MapConfig(Map<String, String> props) {
-        this.props.putAll(props);
-        this.props = Collections.unmodifiableMap(this.props);
+    public MapConfig(Map<String, Object> props) {
+        props.forEach((k, v) -> this.props.put(k, ScalarNode.from(v, this)));
     }
 
     /**
@@ -83,10 +90,7 @@ public class MapConfig extends AbstractConfig {
      * @param props
      */
     public MapConfig(Properties props) {
-        for (Entry<Object, Object> entry : props.entrySet()) {
-            this.props.put(entry.getKey().toString(), entry.getValue().toString());
-        }
-        this.props = Collections.unmodifiableMap(this.props);
+        props.forEach((k, v) -> this.props.put(k.toString(), ScalarNode.from(v, this)));
     }
     
     @Override
@@ -109,4 +113,8 @@ public class MapConfig extends AbstractConfig {
         return props.keySet().iterator();
     }
 
+    @Override
+    public DataNode child(String name) {
+        return new SortedMapChildNode(this, props, name);
+    }
 }
