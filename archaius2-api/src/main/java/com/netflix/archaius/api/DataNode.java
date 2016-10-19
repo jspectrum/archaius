@@ -1,6 +1,5 @@
 package com.netflix.archaius.api;
 
-import java.util.Collections;
 import java.util.Iterator;
 
 public interface DataNode {
@@ -18,23 +17,26 @@ public interface DataNode {
      * @param key
      * @return
      */
-    default Object value() { return null; }
+    Object value();
     
     /**
      * @param key
      * @return True if the key is contained within this or any of it's child configurations
      */
-    default boolean containsKey(String key) { return false; }
+    boolean containsKey(String key);
     
     /**
      * @return True if empty or false otherwise.
      */
-    default boolean isEmpty() { return true; }
+    boolean isEmpty();
     
     /**
      * @return Return an iterator to all property names owned by this config
      */
-    default Iterator<String> getKeys() { return Collections.emptyIterator(); }
+    Iterator<String> getKeys();
     
+    /**
+     * @return Return the root node 
+     */
     DataNode root();
 }

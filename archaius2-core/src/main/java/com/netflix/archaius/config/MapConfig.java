@@ -15,8 +15,7 @@
  */
 package com.netflix.archaius.config;
 
-import com.netflix.archaius.ScalarNode;
-import com.netflix.archaius.SortedMapChildNode;
+import com.google.common.base.Preconditions;
 import com.netflix.archaius.api.DataNode;
 
 import java.util.Iterator;
@@ -45,7 +44,7 @@ public class MapConfig extends AbstractConfig {
         MapConfig config = new MapConfig();
         
         public <T> Builder put(String key, T value) {
-            config.props.put(key, ScalarNode.from(value, config));
+            config.props.put(key, value);
             return this;
         }
         
@@ -70,7 +69,7 @@ public class MapConfig extends AbstractConfig {
         return new MapConfig(props);
     }
     
-    private final SortedMap<String, DataNode> props = new TreeMap<String, DataNode>();
+    private final SortedMap<String, Object> props = new TreeMap<String, Object>();
     
     private MapConfig() {
     }
@@ -81,7 +80,7 @@ public class MapConfig extends AbstractConfig {
      * @param props
      */
     public MapConfig(Map<String, Object> props) {
-        props.forEach((k, v) -> this.props.put(k, ScalarNode.from(v, this)));
+        this.props.putAll(props);
     }
 
     /**
@@ -90,7 +89,7 @@ public class MapConfig extends AbstractConfig {
      * @param props
      */
     public MapConfig(Properties props) {
-        props.forEach((k, v) -> this.props.put(k.toString(), ScalarNode.from(v, this)));
+        props.forEach((key, value) -> this.props.put(key.toString(), value));
     }
     
     @Override
@@ -114,7 +113,46 @@ public class MapConfig extends AbstractConfig {
     }
 
     @Override
-    public DataNode child(String name) {
-        return new SortedMapChildNode(this, props, name);
+    public DataNode child(String mainChildName) {
+        Preconditions.checkArgument(!mainChildName.endsWith("."));
+        return new DataNode() {
+            final SortedMap<String, Object> childProps = props.subMap(mainChildName + ".", mainChildName + "./uffff");
+            
+            @Override
+            public DataNode child(String name) {
+                return MapConfig.this.child(mainChildName + "." + name);
+            }
+
+            @Override
+            public DataNode root() {
+                return MapConfig.this;
+            }
+
+            @Override
+            public Object value() {
+                return childProps.get(mainChildName);
+            }
+
+            @Override
+            public boolean containsKey(String key) {
+                return childProps.containsKey(mainChildName + "." + key);
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return false;
+            }
+
+            @Override
+            public Iterator<String> getKeys() {
+                return childProps.keySet().iterator();
+            }       
+        };
+    }
+    
+    @Override
+    public Object value() {
+        // There's no such thing as a root value
+        return null;
     }
 }

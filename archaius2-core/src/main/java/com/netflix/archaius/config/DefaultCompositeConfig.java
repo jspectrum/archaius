@@ -15,6 +15,7 @@
  */
 package com.netflix.archaius.config;
 
+import com.google.common.base.Preconditions;
 import com.netflix.archaius.SortedMapChildNode;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
@@ -286,22 +287,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
             @Override
             public Void visitKey(Config config, String key) {
                 if (!values.containsKey(key)) {
-                    values.put(key, new DataNode() {
-                        @Override
-                        public Object value() { 
-                            return config.getRawProperty(key); 
-                        }
-
-                        @Override
-                        public DataNode root() {
-                            return DefaultCompositeConfig.this.root();
-                        }
-
-                        @Override
-                        public DataNode child(String name) {
-                            return null;
-                        }
-                    });
+                    values.put(key, config);
                 }
                 return null;
             }
@@ -317,15 +303,8 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
     
     @Override
     public DataNode child(String name) { 
-        // Make sure we don't have any trailing '.'
-        while (name.endsWith(".")) {
-            name = name.substring(0, name.length()-1);
-        }
-        
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("prefix may not be empty or null");
-        }
-        
+        Preconditions.checkArgument(!name.endsWith("."));
+        Preconditions.checkArgument(name != null && !name.isEmpty());
         return new SortedMapChildNode(root(), values, name);
     }
 
@@ -333,6 +312,12 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
     public DataNode root() {
         // TODO:
         return this;
+    }
+
+    @Override
+    public Object value() {
+        // Composite config has no implicit value
+        return null;
     }
 
     @Override
