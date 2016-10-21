@@ -15,20 +15,21 @@
  */
 package com.netflix.archaius.config;
 
+import com.google.common.base.Preconditions;
 import com.netflix.archaius.ScalarNode;
-import com.netflix.archaius.SortedMapChildNode;
 import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.config.SettableConfig;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
-    private volatile SortedMap<String, DataNode> values = new TreeMap<>();
+    private volatile SortedMap<String, Object> values = new TreeMap<>();
     
     @Override
     public synchronized <T> void setProperty(String key, T value) {
@@ -58,8 +59,8 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
     }
     
     @Override
-    public synchronized Iterator<String> getKeys() {
-        return new HashSet<>(values.keySet()).iterator();
+    public synchronized Iterable<String> keys() {
+        return new ArrayList<>(values.keySet());
     }
 
     @Override
@@ -94,8 +95,51 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
     }
 
     @Override
-    public DataNode child(String name) {
-        // TODO: The SortedMapChildNode is not thread safe
-        return new SortedMapChildNode(root(), values, name);
+    public synchronized ConfigNode child(String prefix) {
+        Preconditions.checkArgument(!prefix.endsWith("."));
+        Supplier<SortedMap<String, Object>> supplier = () -> values.subMap(prefix + ".", prefix + "./uffff");
+        return new ConfigNode() {
+            private volatile SortedMap<String, Object> childProps = supplier.get();
+            
+            @Override
+            public ConfigNode child(String prefix2) {
+                return DefaultSettableConfig.this.child(prefix + "." + prefix2);
+            }
+
+            @Override
+            public ConfigNode root() {
+                return DefaultSettableConfig.this;
+            }
+
+            @Override
+            public Object value() {
+                return childProps.get(prefix);
+            }
+
+            @Override
+            public boolean containsKey(String key) {
+                return childProps.containsKey(prefix + "." + key);
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return false;
+            }
+
+            @Override
+            public Iterable<String> keys() {
+                return childProps.keySet();
+            }
+        };
+    }
+
+    @Override
+    public Iterator<String> getKeys(String prefix) {
+        return child(prefix).keys().iterator();
+    }
+
+    @Override
+    public Object value() {
+        return null;
     }
 }

@@ -1,33 +1,42 @@
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 
-public class ScalarNode implements DataNode {
+import java.util.Collections;
 
-    public static ScalarNode from(Object value, DataNode root) {
-        return new ScalarNode(value, root);
+public abstract class ScalarNode implements ConfigNode {
+
+    public static ScalarNode from(Object value, ConfigNode root) {
+        return new ScalarNode() {
+            @Override
+            public ConfigNode root() {
+                return root;
+            }
+            
+            @Override
+            public Object value() {
+                return value;
+            }
+        };
     }
 
-    private final Object value;
-    private final DataNode root;
-    
-    private ScalarNode(Object value, DataNode root) {
-        this.value = value;
-        this.root = root;
-    }
-    
     @Override
-    public DataNode child(String name) {
+    public ConfigNode child(String name) {
         return null;
     }
 
-    @Override
-    public Object value() {
-        return value;
-    }
+	@Override
+	public boolean containsKey(String key) {
+		return false;
+	}
 
-    @Override
-    public DataNode root() {
-        return root;
-    }
+	@Override
+	public boolean isEmpty() {
+		return false;
+	}
+
+	@Override
+	public Iterable<String> keys() {
+		return Collections.emptyList();
+	}
 }

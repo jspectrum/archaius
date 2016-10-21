@@ -1,18 +1,17 @@
 package com.netflix.archaius.api;
 
-import java.util.Iterator;
-
-public interface DataNode {
+public interface ConfigNode {
     /**
      * Return a child node with any properties prefixed by 'prefix'
+     * 
      * @param name
      * @return
      */
-    DataNode child(String name);
+    ConfigNode child(String name);
     
     /**
-     * Get the property from the Decoder.  All basic data types as well any type
-     * will a valueOf or String contructor will be supported.
+     * For scalar nodes return the property value
+     * 
      * @param type
      * @param key
      * @return
@@ -31,12 +30,10 @@ public interface DataNode {
     boolean isEmpty();
     
     /**
-     * @return Return an iterator to all property names owned by this config
+     * @return Return an iterable of all property names owned by this node.  If a prefix node
+     * then all prefixes will be stripped.
      */
-    Iterator<String> getKeys();
+    Iterable<String> keys();
     
-    /**
-     * @return Return the root node 
-     */
-    DataNode root();
+    ConfigNode root();
 }

@@ -16,7 +16,7 @@
 package com.netflix.archaius.commons;
 
 import com.netflix.archaius.ScalarNode;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.config.AbstractConfig;
 
 import org.apache.commons.configuration.AbstractConfiguration;
@@ -125,7 +125,7 @@ public class CommonsToConfig extends AbstractConfig {
     }
 
     @Override
-    public DataNode child(String name) {
+    public ConfigNode child(String name) {
         return null;
     }
 }

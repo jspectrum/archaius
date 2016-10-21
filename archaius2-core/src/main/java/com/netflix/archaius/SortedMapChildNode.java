@@ -1,27 +1,33 @@
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
+import com.netflix.archaius.api.Decoder;
 
 import java.util.Iterator;
 import java.util.SortedMap;
 
-public class SortedMapChildNode implements DataNode {
-    private final SortedMap<String, DataNode> values;
+/**
+ * ConfigNode backed by a SortedMap.  Access to the map is synchronized
+ *
+ */
+public class SortedMapChildNode implements ConfigNode {
+    private final SortedMap<String, ConfigNode> values;
     
     // Prefix without trailing '.'
     private final String path;
 
-    private final DataNode root;
+    private final Decoder decoder;
 
-    public SortedMapChildNode(DataNode root, SortedMap<String, DataNode> values, String path) {
+    public SortedMapChildNode(SortedMap<String, ConfigNode> values, Decoder decoder, String path) {
         this.values = values.subMap(path + ".", path + ".\uffff");
         this.path = path;
-        this.root = root;
     }
     
     @Override
-    public DataNode child(String name) { 
-        return new SortedMapChildNode(root, values, this.path + "." + name);
+    public ConfigNode child(String name) { 
+        return new SortedMapChildNode(values, this.path + "." + name) {
+            
+        };
     }
     
     @Override
@@ -44,12 +50,12 @@ public class SortedMapChildNode implements DataNode {
     }
     
     @Override
-    public Iterator<String> getKeys() { 
-        return values.keySet().iterator();
+    public Iterable<String> keys() {
+        return values.keySet();
     }
 
     @Override
-    public DataNode root() {
-        return root;
+    public ConfigNode root() {
+        return this;
     }
 }

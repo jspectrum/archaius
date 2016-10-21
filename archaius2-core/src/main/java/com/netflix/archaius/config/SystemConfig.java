@@ -15,53 +15,11 @@
  */
 package com.netflix.archaius.config;
 
-import com.netflix.archaius.api.DataNode;
-
-import java.util.Iterator;
-
-public class SystemConfig extends AbstractConfig {
+public class SystemConfig extends MapConfig {
 
     public static final SystemConfig INSTANCE = new SystemConfig();
 
-    @Override
-    public Object getRawProperty(String key) {
-        return System.getProperty(key);
-    }
-
-    @Override
-    public boolean containsKey(String key) {
-        return System.getProperty(key) != null;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return false;
-    }
-
-    @Override
-    public Iterator<String> getKeys() {
-        return new Iterator<String>() {
-            Iterator<Object> obj = System.getProperties().keySet().iterator();
-            
-            @Override
-            public boolean hasNext() {
-                return obj.hasNext();
-            }
-
-            @Override
-            public String next() {
-                return obj.next().toString();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    @Override
-    public DataNode child(String name) {
-        return null;
+    public SystemConfig() {
+        super(System.getProperties());
     }
 }

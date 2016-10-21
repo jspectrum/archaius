@@ -16,13 +16,14 @@
 package com.netflix.archaius.config;
 
 import com.google.common.base.Preconditions;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 /**
  * Config backed by an immutable map.
@@ -44,7 +45,8 @@ public class MapConfig extends AbstractConfig {
         MapConfig config = new MapConfig();
         
         public <T> Builder put(String key, T value) {
-            config.props.put(key, value);
+            Preconditions.checkState(config != null, "Builder cannot be mutate after build() is called");
+            config.values.put(key, value);
             return this;
         }
         
@@ -69,7 +71,7 @@ public class MapConfig extends AbstractConfig {
         return new MapConfig(props);
     }
     
-    private final SortedMap<String, Object> props = new TreeMap<String, Object>();
+    private final SortedMap<String, Object> values = new TreeMap<String, Object>();
     
     private MapConfig() {
     }
@@ -80,7 +82,7 @@ public class MapConfig extends AbstractConfig {
      * @param props
      */
     public MapConfig(Map<String, Object> props) {
-        this.props.putAll(props);
+        this.values.putAll(props);
     }
 
     /**
@@ -89,53 +91,54 @@ public class MapConfig extends AbstractConfig {
      * @param props
      */
     public MapConfig(Properties props) {
-        props.forEach((key, value) -> this.props.put(key.toString(), value));
+        props.forEach((key, value) -> this.values.put(key.toString(), value));
     }
     
     @Override
     public Object getRawProperty(String key) {
-        return props.get(key);
+        return values.get(key);
     }
 
     @Override
     public boolean containsKey(String key) {
-        return props.containsKey(key);
+        return values.containsKey(key);
     }
 
     @Override
     public boolean isEmpty() {
-        return props.isEmpty();
+        return values.isEmpty();
     }
 
     @Override
-    public Iterator<String> getKeys() {
-        return props.keySet().iterator();
+    public Iterable<String> keys() {
+        return values.keySet();
     }
 
     @Override
-    public DataNode child(String mainChildName) {
-        Preconditions.checkArgument(!mainChildName.endsWith("."));
-        return new DataNode() {
-            final SortedMap<String, Object> childProps = props.subMap(mainChildName + ".", mainChildName + "./uffff");
+    public ConfigNode child(String prefix) {
+        Preconditions.checkArgument(!prefix.endsWith("."));
+        Supplier<SortedMap<String, Object>> supplier = () -> values.subMap(prefix + ".", prefix + "./uffff");
+        return new ConfigNode() {
+            private volatile SortedMap<String, Object> childProps = supplier.get();
             
             @Override
-            public DataNode child(String name) {
-                return MapConfig.this.child(mainChildName + "." + name);
+            public ConfigNode child(String name) {
+                return MapConfig.this.child(prefix + "." + name);
             }
 
             @Override
-            public DataNode root() {
+            public ConfigNode root() {
                 return MapConfig.this;
             }
 
             @Override
             public Object value() {
-                return childProps.get(mainChildName);
+                return childProps.get(prefix);
             }
 
             @Override
             public boolean containsKey(String key) {
-                return childProps.containsKey(mainChildName + "." + key);
+                return childProps.containsKey(prefix + "." + key);
             }
 
             @Override
@@ -144,9 +147,9 @@ public class MapConfig extends AbstractConfig {
             }
 
             @Override
-            public Iterator<String> getKeys() {
-                return childProps.keySet().iterator();
-            }       
+            public Iterable<String> keys() {
+                return childProps.keySet();
+            }
         };
     }
     
@@ -154,5 +157,10 @@ public class MapConfig extends AbstractConfig {
     public Object value() {
         // There's no such thing as a root value
         return null;
+    }
+
+    @Override
+    public Iterator<String> getKeys(String prefix) {
+        return child(prefix).keys().iterator();
     }
 }

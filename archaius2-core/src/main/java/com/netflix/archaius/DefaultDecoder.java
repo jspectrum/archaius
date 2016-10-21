@@ -15,7 +15,7 @@
  */
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.TypeDecoder;
 import com.netflix.archaius.api.TypeDecoders;
@@ -168,12 +168,12 @@ public class DefaultDecoder implements Decoder {
 
     public static class Builder {
         DefaultDecoder instance = new DefaultDecoder();
-
+        
         public <T> Builder withStringDecoder(final Class<T> classType, final Function<String, T> decoder) {
             instance.typeDecoders.put(classType, new TypeDecoder<T>() {
                 @SuppressWarnings("unchecked")
                 @Override
-                public T decode(TypeToken type, DataNode node, TypeDecoders decoders) {
+                public T decode(TypeToken type, ConfigNode node, TypeDecoders decoders) {
                     Object value = node.value();
                     if (value == null || value.getClass().isAssignableFrom(classType)) {
                         return (T) value;
@@ -190,7 +190,7 @@ public class DefaultDecoder implements Decoder {
         public <T> Builder withStringDecoder(final TypeMatcher matcher, BiFunction<TypeToken, String, T> decoder) {
             instance.matchingDecoders.put(matcher, new TypeDecoder<T>() {
                 @Override
-                public T decode(TypeToken type, DataNode node, TypeDecoders decoders) {
+                public T decode(TypeToken type, ConfigNode node, TypeDecoders decoders) {
                     Object value = node.value();
                     if (value instanceof String) {
                         return decoder.apply(type, instance.interpolate((String) value, node.root()));
@@ -233,7 +233,7 @@ public class DefaultDecoder implements Decoder {
     private DefaultDecoder() {
     }
     
-    private String interpolate(String value, DataNode root) {
+    private String interpolate(String value, ConfigNode root) {
         return new StrSubstitutor(
             new StrLookup<String>() {
                 @Override
@@ -262,7 +262,7 @@ public class DefaultDecoder implements Decoder {
     }
 
     @Override
-    public <T> T decode(TypeToken type, DataNode node) {
+    public <T> T decode(TypeToken type, ConfigNode node) {
         TypeDecoder<T> decoder = getTypeDecoder(type);
         if (decoder != null) {
             return decoder.decode(type, node, this);

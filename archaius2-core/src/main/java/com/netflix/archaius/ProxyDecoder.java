@@ -1,7 +1,7 @@
 package com.netflix.archaius;
 
 import com.netflix.archaius.ConfigProxyFactory.MethodInvoker;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.TypeDecoder;
 import com.netflix.archaius.api.TypeDecoders;
 import com.netflix.archaius.api.TypeToken;
@@ -36,11 +36,11 @@ public class ProxyDecoder implements TypeDecoder {
     }
     
     @Override
-    public Object decode(TypeToken type, DataNode node, TypeDecoders decoders) {
+    public Object decode(TypeToken type, ConfigNode node, TypeDecoders decoders) {
         final Map<Method, MethodInvoker<?>> invokers = new HashMap<>();
 
         for (Method method : type.getRawType().getMethods()) {
-            DataNode elementNode = node.child(methodToPropertyName.apply(method));
+            ConfigNode elementNode = node.child(methodToPropertyName.apply(method));
         }
         
         // TODO Auto-generated method stub

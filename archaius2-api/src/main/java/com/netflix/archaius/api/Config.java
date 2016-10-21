@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Core API for reading a configuration.  The API is read only.
  */
-public interface Config extends DataNode {
+public interface Config extends ConfigNode {
     public interface Visitor<T> {
         T visitKey(Config config, String key);
     }

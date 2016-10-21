@@ -18,14 +18,13 @@ package com.netflix.archaius.config;
 import com.netflix.archaius.DefaultDecoder;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.exceptions.ParseException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -111,56 +110,6 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
-    public Iterator<String> getKeys(final String prefix) {
-        return new Iterator<String>() {
-            Iterator<String> iter = getKeys();
-            String next;
-
-            {
-                while (iter.hasNext()) {
-                    next = iter.next();
-                    if (next.startsWith(prefix)) {
-                        break;
-                    }
-                    else {
-                        next = null;
-                    }
-                }
-            }
-            
-            @Override
-            public boolean hasNext() {
-                return next != null;
-            }
-
-            @Override
-            public String next() {
-                if (next == null) {
-                    throw new IllegalStateException();
-                }
-                
-                String current = next;
-                next = null;
-                while (iter.hasNext()) {
-                    next = iter.next();
-                    if (next.startsWith(prefix)) {
-                        break;
-                    }
-                    else {
-                        next = null;
-                    }
-                }
-                return current;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    @Override
     public Config getPrefixedView(String prefix) {
         if (prefix == null || prefix.isEmpty() || prefix.equals(".")) {
             return this;
@@ -171,9 +120,8 @@ public abstract class AbstractConfig implements Config {
     @Override
     public <T> T accept(Visitor<T> visitor) {
         T result = null;
-        Iterator<String> iter = getKeys();
-        while (iter.hasNext()) {
-            result = visitor.visitKey(this, iter.next());
+        for (String key : keys()) {
+            result = visitor.visitKey(this, key);
         }
         return result;
     }
@@ -335,7 +283,7 @@ public abstract class AbstractConfig implements Config {
         throw new ParseException("Error parsing value '" + value + "' for property '" + key + "'", e);
     }
     
-    public DataNode root() {
+    public ConfigNode root() {
         return this;
     }
 }

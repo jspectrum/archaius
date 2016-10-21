@@ -14,7 +14,7 @@ import org.junit.runners.model.Statement;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.config.SettableConfig;
@@ -265,13 +265,13 @@ public class Archaius2TestConfig implements TestRule, SettableConfig {
     }
 
     @Override
-    public DataNode child(String name) {
+    public ConfigNode child(String name) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public DataNode root() {
+    public ConfigNode root() {
         // TODO Auto-generated method stub
         return null;
     }

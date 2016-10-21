@@ -1,6 +1,6 @@
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.TypeDecoder;
 import com.netflix.archaius.api.TypeDecoders;
 import com.netflix.archaius.api.TypeMatcher;
@@ -104,7 +104,7 @@ public class DefaultTypeDecoders implements TypeDecoders {
             instance.typeDecoders.put(classType, new TypeDecoder<T>() {
                 @SuppressWarnings("unchecked")
                 @Override
-                public T decode(TypeToken type, DataNode node, TypeDecoders decoders) {
+                public T decode(TypeToken type, ConfigNode node, TypeDecoders decoders) {
                     Object value = node.value();
                     if (value.getClass().isAssignableFrom(classType)) {
                         return (T)value;
@@ -121,7 +121,7 @@ public class DefaultTypeDecoders implements TypeDecoders {
         public <T> Builder withStringDecoder(final TypeMatcher matcher, BiFunction<TypeToken, String, T> decoder) {
             instance.matchingDecoders.put(matcher, new TypeDecoder<T>() {
                 @Override
-                public T decode(TypeToken type, DataNode node, TypeDecoders decoders) {
+                public T decode(TypeToken type, ConfigNode node, TypeDecoders decoders) {
                     Object value = node.value();
                     if (value instanceof String) {
                         return decoder.apply(type, (String)value);
@@ -179,7 +179,7 @@ public class DefaultTypeDecoders implements TypeDecoders {
     }
     
     @Override
-    public <T> T decode(TypeToken type, DataNode node) {
+    public <T> T decode(TypeToken type, ConfigNode node) {
         TypeDecoder<T> decoder = getTypeDecoder(type);
         if (decoder != null) {
             return decoder.decode(type, node, this);

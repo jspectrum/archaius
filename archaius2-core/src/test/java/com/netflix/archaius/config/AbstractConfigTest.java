@@ -18,7 +18,7 @@ package com.netflix.archaius.config;
 import java.util.Collections;
 import java.util.Iterator;
 
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class AbstractConfigTest {
         }
 
         @Override
-        public DataNode child(String name) {
+        public ConfigNode child(String name) {
             return null;
         }
     };

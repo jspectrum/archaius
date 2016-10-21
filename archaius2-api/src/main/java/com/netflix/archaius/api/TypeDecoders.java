@@ -4,13 +4,13 @@ import java.lang.reflect.Type;
 
 public interface TypeDecoders {
 
-    <T> T decode(TypeToken type, DataNode node);
+    <T> T decode(TypeToken type, ConfigNode node);
     
-    default <T> T decode(Type type, DataNode node) {
+    default <T> T decode(Type type, ConfigNode node) {
         return decode(TypeToken.create(type), node);
     }
     
-    default <T> T decode(Class<T> type, DataNode node) {
+    default <T> T decode(Class<T> type, ConfigNode node) {
         return decode(TypeToken.create(type), node);
     }
 

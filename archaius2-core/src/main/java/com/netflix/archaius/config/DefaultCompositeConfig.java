@@ -19,7 +19,7 @@ import com.google.common.base.Preconditions;
 import com.netflix.archaius.SortedMapChildNode;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
@@ -91,7 +91,8 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
     private final Map<String, Config> lookup = new LinkedHashMap<String, Config>();
     private final ConfigListener listener;
     private final boolean reversed;
-    private volatile SortedMap<String, DataNode> values = new TreeMap<>();
+    
+    private volatile SortedMap<String, ConfigNode> values = new TreeMap<>();
     
     public DefaultCompositeConfig() {
         this(false);
@@ -282,7 +283,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
     }
 
     private synchronized void rebuildValueMap() {
-        final SortedMap<String, DataNode> values = new TreeMap<>();
+        final SortedMap<String, ConfigNode> values = new TreeMap<>();
         accept(new CompositeVisitor<Void>() {
             @Override
             public Void visitKey(Config config, String key) {
@@ -302,14 +303,14 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
     }
     
     @Override
-    public DataNode child(String name) { 
+    public ConfigNode child(String name) { 
         Preconditions.checkArgument(!name.endsWith("."));
         Preconditions.checkArgument(name != null && !name.isEmpty());
         return new SortedMapChildNode(root(), values, name);
     }
 
     @Override
-    public DataNode root() {
+    public ConfigNode root() {
         // TODO:
         return this;
     }

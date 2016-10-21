@@ -17,7 +17,7 @@ package com.netflix.archaius.config;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.DataNode;
+import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.Decoder;
 
 import java.util.Iterator;
@@ -94,7 +94,7 @@ public class PrefixedViewConfig extends AbstractConfig {
     }
 
     @Override
-    public DataNode child(String name) {
+    public ConfigNode child(String name) {
         // TODO Auto-generated method stub
         return null;
     }

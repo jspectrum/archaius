@@ -15,43 +15,20 @@
  */
 package com.netflix.archaius.config;
 
-import com.netflix.archaius.api.DataNode;
-
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.Map;
 
-public class EnvironmentConfig extends AbstractConfig {
+public class EnvironmentConfig extends MapConfig {
 
     public static final EnvironmentConfig INSTANCE = new EnvironmentConfig();
     
-    private final Map<String, String> properties;
-    
     public EnvironmentConfig() {
-        this.properties = System.getenv();
-    }
-
-    @Override
-    public Object getRawProperty(String key) {
-        return properties.get(key);
-    }
-
-    @Override
-    public boolean containsKey(String key) {
-        return properties.containsKey(key);
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return properties.isEmpty();
+        super(toStringObjectMap(System.getenv()));
     }
     
-    @Override
-    public Iterator<String> getKeys() {
-        return properties.keySet().iterator();
-    }
-
-    @Override
-    public DataNode child(String name) {
-        return null;
+    private static Map<String, Object> toStringObjectMap(Map<String, String> src) {
+        Map<String, Object> result = new HashMap<>();
+        src.forEach((k,v)->result.put(k,v));
+        return result;
     }
 }
