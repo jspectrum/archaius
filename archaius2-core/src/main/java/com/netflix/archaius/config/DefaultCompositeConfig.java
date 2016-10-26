@@ -16,7 +16,6 @@
 package com.netflix.archaius.config;
 
 import com.google.common.base.Preconditions;
-import com.netflix.archaius.SortedMapChildNode;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.ConfigNode;
@@ -36,6 +35,8 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicStampedReference;
+import java.util.function.Supplier;
 
 /**
  * Config that is a composite of multiple configuration and as such doesn't track 
@@ -87,12 +88,28 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
         return builder.build();
     }
     
+    /**
+     * All child configurations in priority order.
+     */
     private final CopyOnWriteArrayList<Config> children = new CopyOnWriteArrayList<Config>();
+    
+    /**
+     * Lookup of child name to Config instance.
+     */
     private final Map<String, Config> lookup = new LinkedHashMap<String, Config>();
+    
     private final ConfigListener listener;
+    
     private final boolean reversed;
     
-    private volatile SortedMap<String, ConfigNode> values = new TreeMap<>();
+    private ConfigNode root = this;
+    
+    /**
+     * Cache of all child keys with pointers to the ConfigNode for each key.  The values set is
+     * recomputed with each update
+     */
+    private AtomicStampedReference<SortedMap<String, ConfigNode>> values = 
+            new AtomicStampedReference<>(new TreeMap<String, ConfigNode>(), 1);
     
     public DefaultCompositeConfig() {
         this(false);
@@ -100,7 +117,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
     
     public DefaultCompositeConfig(boolean reversed) {
         this.reversed = reversed;
-        listener = new ConfigListener() {
+        this.listener = new ConfigListener() {
             @Override
             public void onConfigAdded(Config config) {
                 notifyConfigAdded(DefaultCompositeConfig.this);
@@ -128,26 +145,16 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
 
     @Override
     public synchronized boolean addConfig(String name, Config child) throws ConfigException {
-        return internalAddConfig(name, child);
-    }
-    
-    private synchronized boolean internalAddConfig(String name, Config child) throws ConfigException {
-        LOG.trace("Adding config {} to {}", name, hashCode());
-        
-        if (child == null) {
-            // TODO: Log a warning?
-            return false;
-        }
-        
-        if (name == null) {
-            throw new ConfigException("Child configuration must be named");
-        }
+        Preconditions.checkArgument(name != null, "Child name may not be null");
+        Preconditions.checkArgument(child != null, "Child may not be null");
         
         if (lookup.containsKey(name)) {
             LOG.info("Configuration with name'{}' already exists", name);
             return false;
         }
 
+        LOG.trace("Adding config {} to {}", name, hashCode());
+        
         lookup.put(name, child);
         if (reversed) {
             children.add(0, child);
@@ -164,7 +171,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
     @Override
     public synchronized void addConfigs(LinkedHashMap<String, Config> configs) throws ConfigException {
         for (Entry<String, Config> entry : configs.entrySet()) {
-            internalAddConfig(entry.getKey(), entry.getValue());
+            addConfig(entry.getKey(), entry.getValue());
         }
     }
 
@@ -188,16 +195,12 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
 
     @Override
     public synchronized void replaceConfig(String name, Config child) throws ConfigException {
-        internalRemoveConfig(name);
-        internalAddConfig(name, child);
+        removeConfig(name);
+        addConfig(name, child);
     }
 
     @Override
     public synchronized Config removeConfig(String name) {
-        return internalRemoveConfig(name);
-    }
-    
-    public synchronized Config internalRemoveConfig(String name) {
         Config child = this.lookup.remove(name);
         if (child != null) {
             this.children.remove(child);
@@ -216,7 +219,7 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
 
     @Override
     public Object getRawProperty(String key) {
-        return values.get(key).value();
+        return values.getReference().get(key).value();
     }
 
     @Override
@@ -243,26 +246,29 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
 
     @Override
     public boolean containsKey(String key) {
-        return values.containsKey(key);
+        return values.getReference().containsKey(key);
     }
 
     @Override
     public boolean isEmpty() {
-        return values.isEmpty();
+        return values.getReference().isEmpty();
     }
 
     /**
      * Return a set of all unique keys tracked by any child of this composite.
      * This can be an expensive operations as it requires iterating through all of
      * the children.
-     * 
-     * TODO: Cache keys
      */
     @Override
-    public Iterator<String> getKeys() {
-        return values.keySet().iterator();
+    public Iterable<String> keys() {
+        return values.getReference().keySet();
     }
     
+    @Override
+    public Iterator<String> getKeys(String prefix) {
+        return child(prefix).keys().iterator();
+    }
+
     @Override
     public synchronized <T> T accept(Visitor<T> visitor) {
         T result = null;
@@ -299,20 +305,75 @@ public class DefaultCompositeConfig extends AbstractConfig implements CompositeC
                 return null;
             }
         });
-        this.values = values;
+        this.values.set(values, this.values.getStamp() + 1);
     }
     
     @Override
-    public ConfigNode child(String name) { 
-        Preconditions.checkArgument(!name.endsWith("."));
-        Preconditions.checkArgument(name != null && !name.isEmpty());
-        return new SortedMapChildNode(root(), values, name);
+    public ConfigNode child(String prefix) { 
+        Preconditions.checkArgument(prefix != null && !prefix.isEmpty());
+        Preconditions.checkArgument(!prefix.endsWith("."));
+
+        final Supplier<SortedMap<String, ConfigNode>> supplier = new Supplier<SortedMap<String, ConfigNode>>() {
+            private AtomicStampedReference<SortedMap<String, ConfigNode>> cache 
+                = new AtomicStampedReference<>(new TreeMap<>(), 0);
+            
+            @Override
+            public SortedMap<String, ConfigNode> get() {
+                do {
+                    int[] currentStamp = new int[1];
+                    SortedMap<String, ConfigNode> current = cache.get(currentStamp);
+                    
+                    int[] mainStamp = new int[1];
+                    SortedMap<String, ConfigNode> root = values.get(mainStamp);
+                    
+                    if (currentStamp[0] == mainStamp[0]) {
+                        return cache.getReference();
+                    } else {
+                        SortedMap<String, ConfigNode> newSub = root.subMap( prefix + ".", prefix + "./uffff");
+                        if (cache.compareAndSet(current, newSub, currentStamp[0], mainStamp[0])) {
+                            return newSub;
+                        }
+                    }
+                } while (true);
+            }
+        };
+        
+        return new ConfigNode() {
+            @Override
+            public ConfigNode child(String prefix2) {
+                return DefaultCompositeConfig.this.child(prefix + "." + prefix2);
+            }
+
+            @Override
+            public ConfigNode root() {
+                return root;
+            }
+
+            @Override
+            public Object value() {
+                return supplier.get().get(prefix);
+            }
+
+            @Override
+            public boolean containsKey(String key) {
+                return supplier.get().containsKey(prefix + "." + key);
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return supplier.get().isEmpty();
+            }
+
+            @Override
+            public Iterable<String> keys() {
+                return supplier.get().keySet();
+            }
+        };
     }
 
     @Override
     public ConfigNode root() {
-        // TODO:
-        return this;
+        return root;
     }
 
     @Override

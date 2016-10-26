@@ -116,6 +116,7 @@ public class MapConfig extends AbstractConfig {
 
     @Override
     public ConfigNode child(String prefix) {
+        Preconditions.checkArgument(prefix != null && !prefix.isEmpty());
         Preconditions.checkArgument(!prefix.endsWith("."));
         Supplier<SortedMap<String, Object>> supplier = () -> values.subMap(prefix + ".", prefix + "./uffff");
         return new ConfigNode() {

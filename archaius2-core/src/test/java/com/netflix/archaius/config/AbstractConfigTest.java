@@ -50,6 +50,16 @@ public class AbstractConfigTest {
         public ConfigNode child(String name) {
             return null;
         }
+
+        @Override
+        public Object value() {
+            return null;
+        }
+
+        @Override
+        public Iterable<String> keys() {
+            return Collections.emptyList();
+        }
     };
 
     @Test

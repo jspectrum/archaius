@@ -110,13 +110,13 @@ public interface Config extends ConfigNode {
     /**
      * @return Return an interator to all prefixed property names owned by this config
      */
-    Iterator<String> getKeys(String prefix);
+    default Iterator<String> getKeys(String prefix) {
+        return child(prefix).keys().iterator();
+    }
     
-    /**
-     * @param prefix
-     * @return Return a subset of the configuration prefixed by a key.
-     */
-    Config getPrefixedView(String prefix);
+    default Iterator<String> getKeys() {
+        return keys().iterator();
+    }
     
     /**
      * Set the Decoder used by get() to parse any type

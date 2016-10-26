@@ -110,14 +110,6 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
-    public Config getPrefixedView(String prefix) {
-        if (prefix == null || prefix.isEmpty() || prefix.equals(".")) {
-            return this;
-        }
-        return new PrefixedViewConfig(prefix, this);
-    }
-
-    @Override
     public <T> T accept(Visitor<T> visitor) {
         T result = null;
         for (String key : keys()) {

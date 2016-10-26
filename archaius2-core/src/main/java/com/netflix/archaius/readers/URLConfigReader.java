@@ -15,6 +15,8 @@
  */
 package com.netflix.archaius.readers;
 
+import com.netflix.archaius.config.polling.PollingResponse;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,8 +30,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-
-import com.netflix.archaius.config.polling.PollingResponse;
 
 public class URLConfigReader implements Callable<PollingResponse> {
     private final URL[] configUrls;
@@ -69,7 +69,7 @@ public class URLConfigReader implements Callable<PollingResponse> {
     
     @Override
     public PollingResponse call() throws IOException {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, Object> map = new HashMap<String, Object>();
         for (URL url: configUrls) {
             Properties props = new Properties();
             InputStream fin = url.openStream();
@@ -95,7 +95,7 @@ public class URLConfigReader implements Callable<PollingResponse> {
         }
         return new PollingResponse() {
             @Override
-            public Map<String, String> getToAdd() {
+            public Map<String, Object> getToAdd() {
                 return map;
             }
 

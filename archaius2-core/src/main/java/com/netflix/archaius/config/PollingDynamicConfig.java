@@ -15,20 +15,19 @@
  */
 package com.netflix.archaius.config;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.netflix.archaius.api.ConfigNode;
 import com.netflix.archaius.api.config.PollingStrategy;
+import com.netflix.archaius.config.polling.PollingResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.netflix.archaius.config.polling.PollingResponse;
+import java.util.Iterator;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Special DynamicConfig that reads an entire snapshot of the configuration
@@ -38,7 +37,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
 public class PollingDynamicConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     
-    private volatile Map<String, String> current = new HashMap<String, String>();
+    private volatile SortedMap<String, Object> current = new TreeMap<String, Object>();
     private final AtomicBoolean busy = new AtomicBoolean();
     private final Callable<PollingResponse> reader;
     private final AtomicLong updateCounter = new AtomicLong();
@@ -82,7 +81,7 @@ public class PollingDynamicConfig extends AbstractConfig {
             try {
                 PollingResponse response = reader.call();
                 if (response.hasData()) {
-                    current = response.getToAdd();
+                    current = new TreeMap<>(response.getToAdd());
                     notifyConfigUpdated(this);
                 }
             }
@@ -117,13 +116,23 @@ public class PollingDynamicConfig extends AbstractConfig {
     }
     
     @Override
-    public Iterator<String> getKeys() {
-        return current.keySet().iterator();
+    public ConfigNode child(String name) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
-    public ConfigNode child(String name) {
-        // TODO Auto-generated method stub
+    public Iterator<String> getKeys(String prefix) {
+        return null;
+    }
+
+    @Override
+    public Object value() {
+        return null;
+    }
+
+    @Override
+    public Iterable<String> keys() {
         return null;
     }
 }
