@@ -119,7 +119,7 @@ public class ArchaiusModule extends AbstractModule {
      */
     @Deprecated
     protected LinkedBindingBuilder<String> bindConfigurationName() {
-        return bind(String.class).annotatedWith(Names.named(InternalArchaiusModule.CONFIG_NAME_KEY));
+        return bind(String.class).annotatedWith(Names.named(LegacyInternalArchaiusModule.CONFIG_NAME_KEY));
     }
     
     /**

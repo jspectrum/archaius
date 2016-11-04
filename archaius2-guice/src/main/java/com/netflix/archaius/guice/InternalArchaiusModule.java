@@ -1,54 +1,36 @@
 package com.netflix.archaius.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.multibindings.MultibindingsScanner;
-import com.google.inject.multibindings.ProvidesIntoSet;
 import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.DefaultArchaiusConfigurator;
+import com.netflix.archaius.DefaultConfigManager;
 import com.netflix.archaius.DefaultPropertyFactory;
-import com.netflix.archaius.api.ArchaiusConfig;
-import com.netflix.archaius.api.ArchaiusConfig.Configurator;
-import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigManager;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
-import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.LibrariesLayer;
-import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.api.inject.RuntimeLayer;
+import com.netflix.archaius.config.EnvironmentConfig;
+import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.readers.PropertiesConfigReader;
+import com.netflix.governator.providers.Advises;
+import com.netflix.governator.providers.ProvidesWithAdvice;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
-import javax.inject.Named;
-import javax.inject.Provider;
+import java.util.function.UnaryOperator;
 
 final class InternalArchaiusModule extends AbstractModule {
-    static final String CONFIG_NAME_KEY         = "archaius.config.name";
-    
-    private static AtomicInteger uniqueNameCounter = new AtomicInteger();
-
-    private static String getUniqueName(String prefix) {
-        return prefix +"-" + uniqueNameCounter.incrementAndGet();
-    }
     
     @Override
     protected void configure() {
-        install(MultibindingsScanner.asModule());
-        
         ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
         requestInjection(listener);
         bind(ConfigurationInjectingListener.class).toInstance(listener);
@@ -59,109 +41,52 @@ final class InternalArchaiusModule extends AbstractModule {
             .addBinding().to(PropertiesConfigReader.class).in(Scopes.SINGLETON);
     }
     
-    @Provides
+    @ProvidesWithAdvice
     @Singleton
-    ArchaiusConfig getArchaiusConfig(Set<Consumer<Configurator>> consumers) {
-        return DefaultArchaiusConfigurator.create(consumers);
+    ConfigManager.Builder getConfigManagerBuilder() {
+        return DefaultConfigManager.builder();
     }
     
+    @Provides
+    ConfigManager getConfigManager(ConfigManager.Builder builder) {
+        return builder.build();
+    }
+    
+    @Provides
     @Singleton
-    private static class ConfigParameters {
-        @Inject(optional=true)
-        @Named(CONFIG_NAME_KEY)
-        private String configName;
-        
-        @Inject(optional=true)
-        CascadeStrategy       cascadingStrategy;
-        
-        @Inject(optional=true)
-        @RemoteLayer 
-        private Provider<Config> remoteLayerProvider;
-        
-        @Inject(optional=true)
-        @DefaultLayer 
-        private Set<Config> defaultConfigs;
-        
-        @Inject(optional=true)
-        @ApplicationOverride
-        private Config applicationOverride;
-
-        @Inject(optional =true)
-        @ApplicationOverrideResources
-        private Set<String> overrideResources;
-        
-        Set<Config> getDefaultConfigs() {
-            return defaultConfigs != null ? defaultConfigs : Collections.emptySet();
-        }
-
-        Optional<Provider<Config>> getRemoteLayer() {
-            return Optional.ofNullable(remoteLayerProvider);
-        }
-
-        Set<String> getOverrideResources() {
-            return overrideResources != null ? overrideResources : Collections.emptySet();
-        }
-        
-        Optional<String> getConfigName() {
-            return Optional.ofNullable(configName);
-        }
-        
-        Optional<CascadeStrategy> getCascadeStrategy() {
-            return Optional.ofNullable(cascadingStrategy);
-        }
-        
-        Optional<Config> getApplicationOverride() {
-            return Optional.ofNullable(applicationOverride);
-        }
+    Config getConfiguration(ConfigManager config) {
+        return config.getConfig();
+    }
+    
+    @Advises(order = Layers.ENV_LAYER_ORDER)
+    @Singleton
+    UnaryOperator<ConfigManager.Builder> adviseEnvLayer() {
+        return builder -> builder.addLayer(Layers.ENV_LAYER, EnvironmentConfig.INSTANCE);
     }
 
-    @ProvidesIntoSet
+    @Advises(order = Layers.SYS_LAYER_ORDER)
     @Singleton
-    Consumer<Configurator> getCoreConfigurator(ConfigParameters params) throws Exception {
-        return configurator -> {
-            params.getDefaultConfigs()
-                .forEach(config -> configurator.addDefaultConfig(getUniqueName("default"), rawConfig -> config));
-            
-            params.getOverrideResources()
-                .forEach(resource -> configurator.addApplicationOverrideResource(resource));
-            
-            params.getApplicationOverride()
-                .ifPresent(config -> configurator.addApplicationOverrideConfig(getUniqueName("override"), rawConfig -> config));
-            
-            params.getConfigName()
-                .ifPresent(name -> configurator.setApplicationName(name));
-            
-            params.getRemoteLayer().map(Provider::get)
-                .ifPresent(config -> configurator.addRemoteConfig(getUniqueName("remote"), rawConfig -> config));
-            
-            params.getCascadeStrategy()
-                .ifPresent(strategy -> configurator.setCascadeStrategy(strategy));
-        };
+    UnaryOperator<ConfigManager.Builder> adviseSysLayer() {
+        return builder -> builder.addLayer(Layers.SYS_LAYER, SystemConfig.INSTANCE);
     }
-        
+
     @Provides
     @Singleton
     @RuntimeLayer
-    SettableConfig getSettableConfig(ArchaiusConfig config) {
-        return config.getOverrideConfig();
-    }
-    
-    @Provides
-    @Singleton
-    Config getConfiguration(ArchaiusConfig config) {
-        return config.getConfig();
+    SettableConfig getSettableConfig(ConfigManager config) {
+        return (SettableConfig)config.getConfigLayer(Layers.OVERRIDE_LAYER);
     }
     
     @Provides
     @Singleton
     @LibrariesLayer
-    CompositeConfig getLibrariesLayer(ArchaiusConfig config) {
-        return config.getLibrariesConfig();
+    CompositeConfig getLibrariesLayer(ConfigManager config) {
+        return (CompositeConfig) config.getConfigLayer(Layers.LIBRARIES_LAYER);
     }
     
     @Provides
     @Singleton
-    Decoder getDecoder(ArchaiusConfig config) {
+    Decoder getDecoder(ConfigManager config) {
         return config.getDecoder();
     }
 

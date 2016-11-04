@@ -6,9 +6,10 @@ import com.google.inject.ProvisionException;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
 import com.netflix.archaius.ConfigMapper;
-import com.netflix.archaius.api.ArchaiusConfig;
+import com.netflix.archaius.api.ConfigManager;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.IoCContainer;
+import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.exceptions.ConfigException;
@@ -30,7 +31,7 @@ public class ConfigurationInjectingListener implements ProvisionListener {
     private Injector          injector;
     
     @Inject
-    private ArchaiusConfig    archaius;
+    private ConfigManager    archaius;
     
     @Inject
     public static void init(ConfigurationInjectingListener listener) {
@@ -57,7 +58,7 @@ public class ConfigurationInjectingListener implements ProvisionListener {
                 LOG.debug("Trying to loading configuration resource {}", resourceName);
                 
                 try {
-                    archaius.loadLibraryConfig(resourceName, loader -> {
+                    archaius.addConfigToLayer(Layers.LIBRARIES_LAYER, resourceName, loader -> {
                         if (source.cascading() != ConfigurationSource.NullCascadeStrategy.class) {
                             loader.withCascadeStrategy(injector.getInstance(source.cascading()));
                         }
