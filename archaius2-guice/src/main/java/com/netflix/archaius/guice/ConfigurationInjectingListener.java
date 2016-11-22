@@ -58,7 +58,7 @@ public class ConfigurationInjectingListener implements ProvisionListener {
                 LOG.debug("Trying to loading configuration resource {}", resourceName);
                 
                 try {
-                    archaius.addResourceToLayer(Layers.LIBRARIES.resource(resourceName), loader -> {
+                    archaius.addResourceToLayer(Layers.LIBRARIES, resourceName, loader -> {
                         if (source.cascading() != ConfigurationSource.NullCascadeStrategy.class) {
                             loader.withCascadeStrategy(injector.getInstance(source.cascading()));
                         }

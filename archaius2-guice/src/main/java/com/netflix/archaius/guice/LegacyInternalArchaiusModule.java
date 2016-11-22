@@ -94,7 +94,7 @@ public final class LegacyInternalArchaiusModule extends AbstractModule {
             params.getConfigName().ifPresent(name -> builder.withConfigName(name));
             
             params.getOverrideResources()
-                .forEach(resourceName -> builder.addResourceToLayer(Layers.OVERRIDE.resource(resourceName)));
+                .forEach(resourceName -> builder.addResourceToLayer(Layers.OVERRIDE, resourceName));
             
             params.getApplicationOverride()
                 .ifPresent(config -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, config));

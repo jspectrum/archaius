@@ -314,7 +314,7 @@ public class ArchaiusModuleTest {
     @Test
     public void testAddingConfigFileOverride() {
         Injector injector = Guice.createInjector(new ArchaiusModule()
-            .configure(builder -> builder.addResourceToLayer(Layers.APPLICATION_OVERRIDE.resource("application-override")))
+            .configure(builder -> builder.addResourceToLayer(Layers.APPLICATION_OVERRIDE, "application-override"))
         );
         Config config = injector.getInstance(Config.class);
         

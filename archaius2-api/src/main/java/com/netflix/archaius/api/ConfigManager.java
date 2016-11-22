@@ -16,52 +16,32 @@ public interface ConfigManager extends Config {
      */
     public static class Key {
         private final String layerName;
-        private final String resourceName;
 	    private final int layerOrder;
 	    
 	    // TODO: after(), before()
-	    private Key(String name, String resourceName, int order) {
+	    private Key(String name, int order) {
 	        this.layerName = name;
 	        this.layerOrder = order;
-	        this.resourceName = resourceName;
         }
 
         public static Key of(String name, int order) {
-            return new Key(name, "", order);
-        }
-        
-        public Key resource(String resourceName) {
-            return new Key(layerName, resourceName, layerOrder);
+            return new Key(name, order);
         }
         
         public int getOrder() {
             return layerOrder;
         }
         
-        public String getLayerName() {
+        public String getName() {
             return layerName;
         }
         
-        public String getResourceName() {
-            return resourceName;
-        }
-
-        public String getFullName() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(layerName);
-            if (!resourceName.isEmpty()) {
-                sb.append(":").append(resourceName);
-            }
-            return sb.toString();
-        }
-
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((layerName == null) ? 0 : layerName.hashCode());
             result = prime * result + layerOrder;
-            result = prime * result + ((resourceName == null) ? 0 : resourceName.hashCode());
             return result;
         }
 
@@ -81,17 +61,12 @@ public interface ConfigManager extends Config {
                 return false;
             if (layerOrder != other.layerOrder)
                 return false;
-            if (resourceName == null) {
-                if (other.resourceName != null)
-                    return false;
-            } else if (!resourceName.equals(other.resourceName))
-                return false;
             return true;
         }
 
         @Override
         public String toString() {
-            return "Key [layerName=" + layerName + ", resourceName=" + resourceName + ", layerOrder=" + layerOrder
+            return "Key [layerName=" + layerName + ", layerOrder=" + layerOrder
                     + "]";
         }
 	}
@@ -105,7 +80,7 @@ public interface ConfigManager extends Config {
      * @param layer
      * @param resourceName
      */
-    void addResourceToLayer(Key layer);
+    void addResourceToLayer(Key layer, String resourceName);
 
     /**
      * Add a named resource to a configuration layer.  The resourceName identifies a base file name
@@ -117,7 +92,7 @@ public interface ConfigManager extends Config {
      * @param resource
      * @param loader
      */
-    void addResourceToLayer(Key layer, Function<ConfigLoader.Loader, ConfigLoader.Loader> loader);
+    void addResourceToLayer(Key layer, String resourceName, Function<ConfigLoader.Loader, ConfigLoader.Loader> loader);
 
     /**
      * Add properties to this configuration layer
@@ -140,7 +115,7 @@ public interface ConfigManager extends Config {
      * @param layerName
      * @return
      */
-    Optional<Config> getConfig(Key layer);
+    Optional<Config> getConfig(Key layer, String name);
 
     /**
      * Remove a configuration from the specified layer
@@ -149,8 +124,8 @@ public interface ConfigManager extends Config {
      * @param layerName
      * @return The config that was removed
      */
-    Optional<Config> removeConfig(Key layer);
-    
+    Optional<Config> removeConfig(Key layer, String name);
+
     Iterable<String> getConfigNames();
 
 }
