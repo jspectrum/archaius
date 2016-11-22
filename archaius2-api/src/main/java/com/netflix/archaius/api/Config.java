@@ -22,8 +22,6 @@ import java.util.List;
 
 /**
  * Core API for reading a configuration.  The API is read only.
- * 
- * @author elandau
  */
 public interface Config {
     public interface Visitor<T> {

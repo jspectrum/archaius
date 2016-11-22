@@ -78,5 +78,4 @@ public class DefaultSettableConfig extends AbstractConfig implements SettableCon
             }
         }
     }
-
 }

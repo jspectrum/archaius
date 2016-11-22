@@ -1,19 +1,5 @@
 package com.netflix.archaius.guice;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.netflix.archaius.api.CascadeStrategy;
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigManager;
-import com.netflix.archaius.api.Layers;
-import com.netflix.archaius.api.inject.DefaultLayer;
-import com.netflix.archaius.api.inject.RemoteLayer;
-import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.config.EnvironmentConfig;
-import com.netflix.archaius.config.SystemConfig;
-import com.netflix.governator.providers.Advises;
-
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -23,9 +9,21 @@ import java.util.function.UnaryOperator;
 import javax.inject.Named;
 import javax.inject.Provider;
 
-public final class LegacyInternalArchaiusModule extends AbstractModule {
-    static final String CONFIG_NAME_KEY         = "archaius.config.name";
+import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.netflix.archaius.DefaultConfigManager;
+import com.netflix.archaius.api.CascadeStrategy;
+import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Layers;
+import com.netflix.archaius.api.inject.DefaultLayer;
+import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.governator.providers.Advises;
 
+public final class LegacyInternalArchaiusModule extends AbstractModule {
+    public static final String CONFIG_NAME_KEY         = "archaius.config.name";
+    public static final int LEGACY_ADVICE_ORDER = 10;
+    
     private final static AtomicInteger uniqueNameCounter = new AtomicInteger();
 
     private static String getUniqueName(String prefix) {
@@ -86,86 +84,31 @@ public final class LegacyInternalArchaiusModule extends AbstractModule {
         }
     }
 
-    @Advises(order = 0)
+    @Advises(order = LEGACY_ADVICE_ORDER)
     @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseCore(ConfigParameters params) throws Exception {
+    UnaryOperator<DefaultConfigManager.Builder> adviseOptionalOverrideLayer(ConfigParameters params) throws Exception {
         return builder -> {
-            // Order matters here!
             params.getCascadeStrategy()
-                .ifPresent(strategy -> builder.setCascadeStrategy(strategy));
+                .ifPresent(strategy -> builder.withCascadeStrategy(strategy));
             
-            return builder;
-        };
-    }
-
-    @Advises(order = Layers.OVERRIDE_LAYER_ORDER - 1)
-    @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseOptionalOverrideLayer(ConfigParameters params) throws Exception {
-        return builder -> {
-            // Order matters here!
-            builder.addLayer(Layers.OVERRIDE_LAYER, new DefaultSettableConfig());
+            params.getConfigName().ifPresent(name -> builder.withConfigName(name));
             
             params.getOverrideResources()
-                .forEach(resource -> builder.addResourceToLayer(Layers.OVERRIDE_LAYER, resource));
-            
-            return builder;
-        };
-    }
-
-    @Advises(order = Layers.APPLICATION_LAYER_ORDER - 1)
-    @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseOptionalApplicationLayer(ConfigParameters params) throws Exception {
-        return builder -> {
-            builder.addCompositeLayer(Layers.APPLICATION_LAYER);
+                .forEach(resourceName -> builder.addResourceToLayer(Layers.OVERRIDE.resource(resourceName)));
             
             params.getApplicationOverride()
-                .ifPresent(config -> builder.addConfigToLayer(Layers.APPLICATION_LAYER, getUniqueName("override"), config));
-            
-            params.getConfigName()
-                .ifPresent(name -> builder.addResourceToLayer(Layers.APPLICATION_LAYER, name));
-            
-            return builder;
-        };
-    }
-
-    @Advises(order = Layers.LIBRARIES_LAYER_ORDER - 1)
-    @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseOptionalLibrariesLayer(ConfigParameters params) throws Exception {
-        return builder -> {
-            // Order matters here!
-            builder.addCompositeLayer(Layers.LIBRARIES_LAYER);
-            
-            return builder;
-        };
-    }
-
-    @Advises(order = Layers.DEFAULT_LAYER_ORDER - 1)
-    @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseDefaultLayer(ConfigParameters params) throws Exception {
-        return builder -> {
-            // Order matters here!
-            builder.addCompositeLayer(Layers.DEFAULT_LAYER);
+                .ifPresent(config -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, config));
             
             params.getDefaultConfigs()
-                .forEach(config -> builder.addConfigToLayer(Layers.DEFAULT_LAYER, getUniqueName("default"), config));
+                .forEach(config -> builder.addConfigToLayer(Layers.DEFAULT, config));
             
-            return builder;
-        };
-    }
-    
-    @Advises(order = Layers.REMOTE_LAYER_ORDER - 1)
-    @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseRemoteLayer(ConfigParameters params) throws Exception {
-        return builder -> {
-            // TODO: Need to make sure there's no circular dependency here where the remote layer needs the current
-            // config.  It's better to use a function
             params.getRemoteLayer().map(Provider::get)
-                .ifPresent(config -> builder.addConfigToLayer(Layers.REMOTE_LAYER, getUniqueName("remote"), config));
+                .ifPresent(config -> builder.addConfigToLayer(Layers.REMOTE_OVERRIDE, config));
             
             return builder;
         };
     }
-    
+
     @Override
     public int hashCode() {
         return getClass().hashCode();

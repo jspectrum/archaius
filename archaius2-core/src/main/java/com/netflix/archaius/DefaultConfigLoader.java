@@ -15,6 +15,17 @@
  */
 package com.netflix.archaius;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigLoader;
@@ -29,17 +40,6 @@ import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * DefaultConfigLoader provides a DSL to load configurations.
@@ -61,11 +61,11 @@ public class DefaultConfigLoader implements ConfigLoader {
     private static final StrInterpolator DEFAULT_INTERPOLATOR = CommonsStrInterpolator.INSTANCE;
                                                     
     public static class Builder {
-        private Set<ConfigReader>  loaders         = new HashSet<ConfigReader>();
-        private CascadeStrategy defaultStrategy = DEFAULT_CASCADE_STRATEGY;
-        private StrInterpolator     interpolator    = DEFAULT_INTERPOLATOR;
-        private Lookup              lookup          = DEFAULT_LOOKUP;
-        
+        private Set<ConfigReader> loaders         = new HashSet<ConfigReader>();
+        private CascadeStrategy   defaultStrategy = DEFAULT_CASCADE_STRATEGY;
+        private StrInterpolator   interpolator    = DEFAULT_INTERPOLATOR;
+        private Lookup            lookup          = DEFAULT_LOOKUP;
+       
         public Builder withConfigReader(ConfigReader loader) {
             this.loaders.add(loader);
             return this;
@@ -177,8 +177,8 @@ public class DefaultConfigLoader implements ConfigLoader {
                                 Config config = reader.load(classLoader, name, interpolator, lookup);
                                 if (!config.isEmpty()) {
                                     compositeConfig.addConfig(name, config);
+                                    LOG.debug("Loaded {} ", name);
                                 }
-                                LOG.debug("Loaded {} ", name);
                             }
                             catch (ConfigException e) {
                                 LOG.debug("Unable to load {}, {}", name, e.getMessage());

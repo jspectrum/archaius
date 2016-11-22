@@ -44,5 +44,4 @@ public final class EmptyConfig extends AbstractConfig {
     public Object getRawProperty(String key) {
         return null;
     }
-
 }

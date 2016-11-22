@@ -14,10 +14,10 @@ import org.apache.commons.configuration.Configuration;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.config.CompositeConfig;
+import com.netflix.archaius.api.ConfigManager;
+import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
-import com.netflix.archaius.api.inject.LibrariesLayer;
 import com.netflix.archaius.api.inject.RuntimeLayer;
 import com.netflix.archaius.commons.CommonsToConfig;
 import com.netflix.archaius.config.DefaultConfigListener;
@@ -29,14 +29,12 @@ import com.netflix.config.PropertyListener;
 
 /**
  * @see StaticArchaiusBridgeModule
- * @author elandau
  */
 @Singleton
 class AbstractConfigurationBridge extends AbstractConfiguration implements AggregatedConfiguration, DynamicPropertySupport {
 
-    private final Config config;
+    private final ConfigManager config;
     private final SettableConfig settable;
-    private final CompositeConfig libraries;
     private final AtomicInteger libNameCounter = new AtomicInteger();
     
     {
@@ -45,13 +43,11 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     
     @Inject
     public AbstractConfigurationBridge(
-            final Config config, 
-            @LibrariesLayer CompositeConfig libraries, 
+            final ConfigManager config,
             @RuntimeLayer SettableConfig settable, 
             DeploymentContext context) {
         this.config = config;
         this.settable = settable;
-        this.libraries = libraries;
     }
     
     @Override
@@ -92,7 +88,7 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     @Override
     public void addConfiguration(AbstractConfiguration config, String name) {
         try {
-            libraries.addConfig(name, new CommonsToConfig(config));
+            this.config.addConfigToLayer(Layers.LIBRARIES.resource(name), new CommonsToConfig(config));
         }
         catch (ConfigAlreadyExistsException e) {
             // OK To ignore
@@ -104,22 +100,25 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
 
     @Override
     public Set<String> getConfigurationNames() {
-        return Sets.newHashSet(libraries.getConfigNames());
+        return Sets.newHashSet(config.getConfigNames());
     }
 
     @Override
     public List<String> getConfigurationNameList() {
-        return Lists.newArrayList(libraries.getConfigNames());
+        return Lists.newArrayList(config.getConfigNames());
     }
 
     @Override
     public Configuration getConfiguration(String name) {
-        return new ConfigToCommonsAdapter(libraries.getConfig(name));
+        return config
+            .getConfig(Layers.LIBRARIES.resource(name))
+            .map(config -> new ConfigToCommonsAdapter(config))
+            .orElse(null);
     }
 
     @Override
     public int getNumberOfConfigurations() {
-        return libraries.getConfigNames().size();
+        return getConfigurationNames().size();
     }
 
     @Override
@@ -134,8 +133,10 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
 
     @Override
     public Configuration removeConfiguration(String name) {
-        libraries.removeConfig(name);
-        return null;
+        return config
+                .removeConfig(Layers.LIBRARIES.resource(name))
+                .map(config -> new ConfigToCommonsAdapter(config))
+                .orElse(null);
     }
 
     @Override

@@ -15,22 +15,21 @@ import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.PropertyFactory;
-import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.config.SettableConfig;
-import com.netflix.archaius.api.inject.LibrariesLayer;
 import com.netflix.archaius.api.inject.RuntimeLayer;
+import com.netflix.archaius.config.DefaultSettableConfig;
 import com.netflix.archaius.config.EnvironmentConfig;
 import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.readers.PropertiesConfigReader;
-import com.netflix.governator.providers.Advises;
+import com.netflix.governator.providers.AdvisableAnnotatedMethodScanner;
 import com.netflix.governator.providers.ProvidesWithAdvice;
-
-import java.util.function.UnaryOperator;
 
 final class InternalArchaiusModule extends AbstractModule {
     
     @Override
     protected void configure() {
+        install(AdvisableAnnotatedMethodScanner.asModule());
+        
         ConfigurationInjectingListener listener = new ConfigurationInjectingListener();
         requestInjection(listener);
         bind(ConfigurationInjectingListener.class).toInstance(listener);
@@ -43,45 +42,31 @@ final class InternalArchaiusModule extends AbstractModule {
     
     @ProvidesWithAdvice
     @Singleton
-    ConfigManager.Builder getConfigManagerBuilder() {
-        return DefaultConfigManager.builder();
+    DefaultConfigManager.Builder getConfigManagerBuilder(@RuntimeLayer SettableConfig settableConfig) {
+        return DefaultConfigManager.builder()
+            .addConfigToLayer(Layers.ENVIRONMENT, EnvironmentConfig.INSTANCE)
+            .addConfigToLayer(Layers.SYSTEM,      SystemConfig.INSTANCE)
+            .addConfigToLayer(Layers.OVERRIDE,    settableConfig)
+            ;
     }
     
     @Provides
-    ConfigManager getConfigManager(ConfigManager.Builder builder) {
+    @Singleton
+    ConfigManager getConfigManager(DefaultConfigManager.Builder builder) {
         return builder.build();
     }
     
     @Provides
     @Singleton
     Config getConfiguration(ConfigManager config) {
-        return config.getConfig();
+        return config;
     }
     
-    @Advises(order = Layers.ENV_LAYER_ORDER)
-    @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseEnvLayer() {
-        return builder -> builder.addLayer(Layers.ENV_LAYER, EnvironmentConfig.INSTANCE);
-    }
-
-    @Advises(order = Layers.SYS_LAYER_ORDER)
-    @Singleton
-    UnaryOperator<ConfigManager.Builder> adviseSysLayer() {
-        return builder -> builder.addLayer(Layers.SYS_LAYER, SystemConfig.INSTANCE);
-    }
-
     @Provides
     @Singleton
     @RuntimeLayer
-    SettableConfig getSettableConfig(ConfigManager config) {
-        return (SettableConfig)config.getConfigLayer(Layers.OVERRIDE_LAYER);
-    }
-    
-    @Provides
-    @Singleton
-    @LibrariesLayer
-    CompositeConfig getLibrariesLayer(ConfigManager config) {
-        return (CompositeConfig) config.getConfigLayer(Layers.LIBRARIES_LAYER);
+    SettableConfig getSettableConfig() {
+        return new DefaultSettableConfig();
     }
     
     @Provides
@@ -109,6 +94,6 @@ final class InternalArchaiusModule extends AbstractModule {
 
     @Override
     public boolean equals(Object obj) {
-        return getClass().equals(obj.getClass());
+        return obj != null && getClass().equals(obj.getClass());
     }
 }

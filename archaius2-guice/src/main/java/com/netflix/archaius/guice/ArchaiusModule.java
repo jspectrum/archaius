@@ -15,93 +15,108 @@
  */
 package com.netflix.archaius.guice;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import com.netflix.archaius.DefaultConfigManager;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
-import com.netflix.archaius.config.MapConfig;
-
-import java.util.Properties;
+import com.netflix.governator.providers.Advises;
 
 /**
- * Guice Module for enabling archaius and making its components injectable.  Installing this
- * module also enables the following functionality.
+ * Guice Module for bootstrapping archaius's {@link DefaultConfigManager} and making its components injectable. 
  * 
- * <ul>
- * <li>Injectable Config</li>
- * <li>Configuration Proxy</li>
- * <li>Configuration mapping</li>
- * </uL>
+ * ArchaiusModule exposes several mechanisms to reduce boilderplate while allowing for customization of 
+ * the ConfigManager. 
  * 
- * This module creates an injectable Config instance that has the following override structure in
- * order of precedence. 
+ * First, its possible to customize basic features by calling methods of the ArchaiusModule, which are 
+ * chainable.
  * 
- *  RUNTIME     - properties set from code
- *  REMOTE      - properties loaded from a remote source
- *  SYSTEM      - System properties
- *  ENVIRONMENT - Environment properties
- *  APPLICATION - Configuration loaded by the application
- *  LIBRARIES   - Configuration loaded by libraries used by the application
- *  DEFAULT     - Default properties driven by bindings
- * 
- * Runtime properties may be set in code by injecting and calling one of the setXXX methods of,
- *  {@literal @}RuntimeLayer SettableConfig config
- *  
- * A remote configuration may be specified by binding to {@literal @}RemoteLayer Config
- * When setting up a remote configuration that needs access to Archaius's Config
- * make sure to inject the qualified {@literal @}Raw Config otherwise the injector will fail
- * with a circular dependency error.  Note that the injected config will have 
- * system, environment and application properties loaded into it.
- * 
- * <code>
- * public class FooRemoteModule extends ArchaiusModule {
- *     {@literal @}Provides
- *     {@literal @}RemoteLayer
- *     Config getRemoteConfig({@literal @}Raw Config config) {
- *         return new FooRemoteConfigImplementaiton(config);
- *     }
+ * For example, to change the main application layer configuration resources name from the default 
+ * 'application' to 'myapplication', 
+ * {@code
+    Guice.createInjector(new ArchaiusModule()
+        .withConfigName("myapplication"));
  * }
- * </code>
+ * 
+ * It's also possible to customize all methods of the {@link DefaultConfigManager#builder()} by passing a consumer
+ * to {@link ArchaiusModule#configure(Consumer)}.  Note that field injection is allowed on the consumer.
+ * 
+ * For example, to add a test override layer to configuration, 
+ * {@code
+    Guice.createInjector(new ArchaiusModule().configure(builder ->
+        builder.addConfigToLayer(Layers.TEST, overrideProperties)));
+ * }
+ * 
+ * The builder can be further customized using {@link @Advises} like so,
+ * {@code
+    Guice.createInjector(new ArchaiusModule() {
+        {@literal @}Advises(order=Integer.MAX_VALUE)
+        {@literal @}Singleton
+        UnaryOperator<DefaultConfigManager.Builder> adviseConfigManagerBuilder() {
+            return builder -> builder.withConfigName("myapplication");
+        }    
+    });
+ * }
+ * 
+ * Note that while this method is more verbose it does allow for more deterministic control over the order in which 
+ * customizations are applied to the builder (driven by {@link Advises#order()}).  Furthermore injections
+ * into the @Advises method is much more straightforward (no need for field injection).
  */
 public class ArchaiusModule extends AbstractModule {
-    private Class<? extends CascadeStrategy> cascadeStrategy;
-    private Config applicationOverride;
-    private String configName;
+    public static final int DEFAULT = 0;
     
-    @Deprecated
-    public ArchaiusModule withConfigName(String value) {
-        this.configName = value;
-        return this;
-    }
+    private List<Consumer<DefaultConfigManager.Builder>> consumers = new ArrayList<>();
+    private Class<? extends CascadeStrategy> cascadeStrategy = null;
     
-    @Deprecated
-    public ArchaiusModule withApplicationOverrides(Properties prop) {
-        return withApplicationOverrides(MapConfig.from(prop));
-    }
-    
-    @Deprecated
-    public ArchaiusModule withApplicationOverrides(Config config) {
-        applicationOverride = config;
-        return this;
-    }
-  
-    /**
-     * @deprecated  Customize by binding CascadeStrategy in a guice module
-     */
-    @Deprecated
     public ArchaiusModule withCascadeStrategy(Class<? extends CascadeStrategy> cascadeStrategy) {
         this.cascadeStrategy = cascadeStrategy;
         return this;
     }
-    
+
     @Deprecated
-    protected void configureArchaius() {
+    public ArchaiusModule withConfigName(String value) {
+        consumers.add(builder -> builder.withConfigName(value));
+        return this;
     }
     
+    @Deprecated
+    public ArchaiusModule withApplicationOverrides(Properties props) {
+        consumers.add(builder -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, props));
+        return this;
+    }
+    
+    @Deprecated
+    public ArchaiusModule withApplicationOverrides(Config config) {
+        consumers.add(builder -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, config));
+        return this;
+    }
+    
+    /**
+     * Mechanism to customize the DefaultConfigManager.Builder prior to build() being called.
+     * Multiple consumers may be added and they are in invoked in the order in which they were added.
+     * Note that consumers are allocated outside of the injector but do support field injection.
+     * 
+     * @param consumer - Consumer that will be applied 
+     * @return Chainable ArchaiusModule
+     */
+    public ArchaiusModule configure(Consumer<DefaultConfigManager.Builder> consumer) {
+        consumers.add(consumer);
+        return this;
+    }
+  
     /**
      * Customize the filename for the main application configuration.  The default filename is
      * 'application'.  
@@ -157,6 +172,7 @@ public class ArchaiusModule extends AbstractModule {
      * </code>
      * 
      * @return LinkedBindingBuilder to which the implementation is set
+     * @deprecated See {@link ArchaiusModule#configure(Consumer)}
      */
     @Deprecated
     protected LinkedBindingBuilder<Config> bindRemoteConfig() {
@@ -177,6 +193,7 @@ public class ArchaiusModule extends AbstractModule {
      * </code>
      * 
      * @return LinkedBindingBuilder to which the implementation is set
+     * @deprecated See {@link ArchaiusModule#configure(Consumer)}
      */
     @Deprecated
     protected LinkedBindingBuilder<CascadeStrategy> bindCascadeStrategy() {
@@ -197,6 +214,7 @@ public class ArchaiusModule extends AbstractModule {
      * </code>
      * 
      * @return LinkedBindingBuilder to which the implementation is set
+     * @deprecated See {@link ArchaiusModule#configure(Consumer)}
      */
     @Deprecated
     protected LinkedBindingBuilder<Config> bindDefaultConfig() {
@@ -217,6 +235,7 @@ public class ArchaiusModule extends AbstractModule {
      * </code>
      * 
      * @return LinkedBindingBuilder to which the implementation is set
+     * @deprecated See {@link ArchaiusModule#configure(Consumer)}
      */
     @Deprecated
     protected LinkedBindingBuilder<Config> bindConfigReader() {
@@ -235,32 +254,38 @@ public class ArchaiusModule extends AbstractModule {
      * });
      * </code>
      *
-     * @return
+     * @deprecated See {@link ArchaiusModule#configure(Consumer)}
      */
     @Deprecated
     protected void bindApplicationConfigurationOverrideResource(String overrideResource)  {
         Multibinder.newSetBinder(binder(), String.class, ApplicationOverrideResources.class).permitDuplicates().addBinding().toInstance(overrideResource);
     }
 
+    @Deprecated
+    protected void configureArchaius() {
+    }
+
     @Override
     protected final void configure() {
         install(new InternalArchaiusModule());
-      
+        install(new LegacyInternalArchaiusModule());
+
         configureArchaius();
 
-        // TODO: Remove in next release
-        if (configName != null) {
-            this.bindConfigurationName().toInstance(configName);
-        }
-        
-        // TODO: Remove in next release
         if (cascadeStrategy != null) {
             this.bindCascadeStrategy().to(cascadeStrategy);
         }
-
-        // TODO: Remove in next release
-        if (applicationOverride != null) {
-            this.bindApplicationConfigurationOverride().toInstance(applicationOverride);
-        }
     }
+    
+    @Advises
+    @Singleton
+    UnaryOperator<DefaultConfigManager.Builder> applyConsumers(Injector injector) throws Exception {
+        return builder -> {
+            consumers.forEach(consumer -> {
+                injector.injectMembers(consumer);
+                consumer.accept(builder);
+            });
+            return builder;
+        };
+    }    
 }
