@@ -325,7 +325,6 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
 
     @Override
     public void addConfigToLayer(Key key, Properties props) {
-        Preconditions.checkArgument(!key.getResourceName().isEmpty(), "Key must have a resource name");
         addConfigToLayer(key, MapConfig.from(props));
     }
 
