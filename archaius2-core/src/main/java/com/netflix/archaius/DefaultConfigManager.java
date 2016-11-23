@@ -144,9 +144,9 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @param props
          * @return Chainable builder
          */
-        public Builder addConfigToLayer(Key layer, Properties props) {
+        public Builder addConfigToLayer(Key layer, String name, Properties props) {
             Preconditions.checkState(rootConfig != null, "Builder already built");
-           actions.add(Element.create(layer, "", (ConfigManager manager) -> manager.addConfigToLayer(layer, props)));
+           actions.add(Element.create(layer, name, (ConfigManager manager) -> manager.addConfigToLayer(layer, name, props)));
             return this;
         }
         
@@ -159,9 +159,9 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @param config
          * @return Chainable builder
          */
-        public Builder addConfigToLayer(Key layer, Config config) {
+        public Builder addConfigToLayer(Key layer, String name, Config config) {
             Preconditions.checkState(rootConfig != null, "Builder already built");
-            actions.add(Element.create(layer, "", (ConfigManager manager) -> manager.addConfigToLayer(layer, config)));
+            actions.add(Element.create(layer, name, (ConfigManager manager) -> manager.addConfigToLayer(layer, name, config)));
             return this;
         }
         
@@ -325,24 +325,25 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     @Override
     public void addResourceToLayer(Key layer, String resourceName) {
         Preconditions.checkArgument(resourceName != null, "Key must have a resource name");
-        addConfigToLayer(layer, configLoader.newLoader().load(resourceName));
+        addConfigToLayer(layer, resourceName, configLoader.newLoader().load(resourceName));
     }
 
     @Override
     public void addResourceToLayer(Key layer, String resourceName, Function<Loader, Loader> loader) {
         Preconditions.checkArgument(!resourceName.isEmpty(), "Key must have a resource name");
-        addConfigToLayer(layer, loader.apply(configLoader.newLoader()).load(resourceName));
+        addConfigToLayer(layer, resourceName, loader.apply(configLoader.newLoader()).load(resourceName));
     }
 
     @Override
-    public void addConfigToLayer(Key layer, Properties props) {
-        addConfigToLayer(layer, MapConfig.from(props));
+    public void addConfigToLayer(Key layer, String name, Properties props) {
+        addConfigToLayer(layer, name, MapConfig.from(props));
     }
 
     @Override
-    public synchronized void addConfigToLayer(Key layer, Config config) {
+    public synchronized void addConfigToLayer(Key layer, String name, Config config) {
         Preconditions.checkArgument(config != null, "Config must not be null");
         Preconditions.checkArgument(layer != null, "Layer must not be null");
+        Preconditions.checkArgument(name != null, "Name must not be null");
         
         if (state.elements.contains(config)) {
             LOG.info("Configuration with already exists");

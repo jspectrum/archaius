@@ -99,7 +99,7 @@ public interface ConfigManager extends Config {
      * @param layer
      * @param props
      */
-    void addConfigToLayer(Key layer, Properties props);
+    void addConfigToLayer(Key layer, String name, Properties props);
     
     /**
      * Add a named configuration to the configuration layer.
@@ -107,7 +107,7 @@ public interface ConfigManager extends Config {
      * @param layerName
      * @param config
      */
-    void addConfigToLayer(Key layer, Config config);
+    void addConfigToLayer(Key layer, String name, Config config);
 
     /**
      * Return a named configuration from the specified layer

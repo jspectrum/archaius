@@ -88,7 +88,7 @@ class AbstractConfigurationBridge extends AbstractConfiguration implements Aggre
     @Override
     public void addConfiguration(AbstractConfiguration config, String name) {
         try {
-            this.config.addConfigToLayer(Layers.LIBRARIES, new CommonsToConfig(config));
+            this.config.addConfigToLayer(Layers.LIBRARIES, name, new CommonsToConfig(config));
         }
         catch (ConfigAlreadyExistsException e) {
             // OK To ignore

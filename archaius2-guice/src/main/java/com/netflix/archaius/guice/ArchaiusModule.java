@@ -94,13 +94,13 @@ public class ArchaiusModule extends AbstractModule {
     
     @Deprecated
     public ArchaiusModule withApplicationOverrides(Properties props) {
-        consumers.add(builder -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, props));
+        consumers.add(builder -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, "override", props));
         return this;
     }
     
     @Deprecated
     public ArchaiusModule withApplicationOverrides(Config config) {
-        consumers.add(builder -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, config));
+        consumers.add(builder -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, "override",  config));
         return this;
     }
     

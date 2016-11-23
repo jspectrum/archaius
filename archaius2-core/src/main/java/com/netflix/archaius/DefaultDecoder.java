@@ -15,9 +15,6 @@
  */
 package com.netflix.archaius;
 
-import com.netflix.archaius.api.Decoder;
-import com.netflix.archaius.exceptions.ParseException;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -41,9 +38,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.xml.bind.DatatypeConverter;
+
+import com.netflix.archaius.api.Decoder;
+import com.netflix.archaius.exceptions.ParseException;
 
 /**
  * @author Spencer Gibb
@@ -96,10 +95,6 @@ public class DefaultDecoder implements Decoder {
         decoderRegistry.put(Date.class, v->new Date(Long.parseLong(v)));
         decoderRegistry.put(Currency.class, Currency::getInstance);
         decoderRegistry.put(BitSet.class, v->BitSet.valueOf(DatatypeConverter.parseHexBinary(v)));
-    }
-    
-    @Inject
-    public DefaultDecoder() {
     }
     
     @SuppressWarnings("unchecked")

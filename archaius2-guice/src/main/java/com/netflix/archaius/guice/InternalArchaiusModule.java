@@ -44,9 +44,9 @@ final class InternalArchaiusModule extends AbstractModule {
     @Singleton
     DefaultConfigManager.Builder getConfigManagerBuilder(@RuntimeLayer SettableConfig settableConfig) {
         return DefaultConfigManager.builder()
-            .addConfigToLayer(Layers.ENVIRONMENT, EnvironmentConfig.INSTANCE)
-            .addConfigToLayer(Layers.SYSTEM,      SystemConfig.INSTANCE)
-            .addConfigToLayer(Layers.OVERRIDE,    settableConfig)
+            .addConfigToLayer(Layers.ENVIRONMENT, "", EnvironmentConfig.INSTANCE)
+            .addConfigToLayer(Layers.SYSTEM,      "", SystemConfig.INSTANCE)
+            .addConfigToLayer(Layers.OVERRIDE,    "", settableConfig)
             ;
     }
     

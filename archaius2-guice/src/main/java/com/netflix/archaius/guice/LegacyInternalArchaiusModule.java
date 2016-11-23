@@ -11,12 +11,16 @@ import javax.inject.Provider;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.netflix.archaius.DefaultConfigManager;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigManager;
 import com.netflix.archaius.api.Layers;
+import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.inject.DefaultLayer;
+import com.netflix.archaius.api.inject.LibrariesLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.governator.providers.Advises;
 
@@ -97,18 +101,25 @@ public final class LegacyInternalArchaiusModule extends AbstractModule {
                 .forEach(resourceName -> builder.addResourceToLayer(Layers.OVERRIDE, resourceName));
             
             params.getApplicationOverride()
-                .ifPresent(config -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, config));
+                .ifPresent(config -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, "", config));
             
             params.getDefaultConfigs()
-                .forEach(config -> builder.addConfigToLayer(Layers.DEFAULT, config));
+                .forEach(config -> builder.addConfigToLayer(Layers.DEFAULT, "", config));
             
             params.getRemoteLayer().map(Provider::get)
-                .ifPresent(config -> builder.addConfigToLayer(Layers.REMOTE_OVERRIDE, config));
+                .ifPresent(config -> builder.addConfigToLayer(Layers.REMOTE_OVERRIDE, "", config));
             
             return builder;
         };
     }
 
+    @Provides
+    @Singleton
+    @LibrariesLayer
+    CompositeConfig getLegacyLibrariesLayerConfig(ConfigManager configManager) {
+        return new LegacyLibraryLayerCompositeConfig(configManager);
+    }
+    
     @Override
     public int hashCode() {
         return getClass().hashCode();
