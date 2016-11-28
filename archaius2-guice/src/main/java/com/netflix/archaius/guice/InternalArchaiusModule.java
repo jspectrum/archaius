@@ -42,8 +42,10 @@ final class InternalArchaiusModule extends AbstractModule {
     
     @ProvidesWithAdvice
     @Singleton
-    DefaultConfigManager.Builder getConfigManagerBuilder(@RuntimeLayer SettableConfig settableConfig) {
-        return DefaultConfigManager.builder()
+    DefaultConfigManager.Builder getConfigManagerBuilder(
+            @Raw DefaultConfigManager configManager, 
+            @RuntimeLayer SettableConfig settableConfig) {
+        return DefaultConfigManager.builder(configManager)
             .addConfigToLayer(Layers.ENVIRONMENT, "", EnvironmentConfig.INSTANCE)
             .addConfigToLayer(Layers.SYSTEM,      "", SystemConfig.INSTANCE)
             .addConfigToLayer(Layers.OVERRIDE,    "", settableConfig)
@@ -86,7 +88,15 @@ final class InternalArchaiusModule extends AbstractModule {
     ConfigProxyFactory getProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         return new ConfigProxyFactory(config, decoder, factory);
     }
-    
+
+    @Provides
+    @Singleton
+    @Raw
+    @Deprecated
+    DefaultConfigManager getRawConfig() {
+        return new DefaultConfigManager();
+    }
+
     @Override
     public int hashCode() {
         return getClass().hashCode();

@@ -128,4 +128,7 @@ public interface ConfigManager extends Config {
 
     Iterable<String> getConfigNames();
 
+    @Deprecated
+    ConfigLoader getConfigLoader();
+
 }

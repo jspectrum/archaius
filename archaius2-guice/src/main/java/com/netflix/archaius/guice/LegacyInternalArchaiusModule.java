@@ -16,6 +16,7 @@ import com.google.inject.Singleton;
 import com.netflix.archaius.DefaultConfigManager;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.api.ConfigManager;
 import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.config.CompositeConfig;
@@ -25,7 +26,7 @@ import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.governator.providers.Advises;
 
 public final class LegacyInternalArchaiusModule extends AbstractModule {
-    public static final String CONFIG_NAME_KEY         = "archaius.config.name";
+    public static final String CONFIG_NAME_KEY = "archaius.config.name";
     public static final int LEGACY_ADVICE_ORDER = 10;
     
     private final static AtomicInteger uniqueNameCounter = new AtomicInteger();
@@ -57,7 +58,7 @@ public final class LegacyInternalArchaiusModule extends AbstractModule {
         
         @Inject(optional=true)
         @ApplicationOverride
-        private Config applicationOverride;
+        private Provider<Config> applicationOverride;
 
         @Inject(optional =true)
         @ApplicationOverrideResources
@@ -83,7 +84,7 @@ public final class LegacyInternalArchaiusModule extends AbstractModule {
             return Optional.ofNullable(cascadingStrategy);
         }
         
-        Optional<Config> getApplicationOverride() {
+        Optional<Provider<Config>> getApplicationOverride() {
             return Optional.ofNullable(applicationOverride);
         }
     }
@@ -101,13 +102,14 @@ public final class LegacyInternalArchaiusModule extends AbstractModule {
                 .forEach(resourceName -> builder.addResourceToLayer(Layers.OVERRIDE, resourceName));
             
             params.getApplicationOverride()
-                .ifPresent(config -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, "", config));
+                .ifPresent(provider -> builder.addConfigToLayer(Layers.APPLICATION_OVERRIDE, "", provider.get()));
             
             params.getDefaultConfigs()
-                .forEach(config -> builder.addConfigToLayer(Layers.DEFAULT, "", config));
+                .forEach(config -> builder.addConfigToLayer(Layers.ENVIRONMENT_DEFAULTS, "", config));
             
-            params.getRemoteLayer().map(Provider::get)
-                .ifPresent(config -> builder.addConfigToLayer(Layers.REMOTE_OVERRIDE, "", config));
+            params.getRemoteLayer()
+                .ifPresent(provider -> builder.adviseLayer(Layers.REMOTE_OVERRIDE, (config) ->
+                        config.addConfigToLayer(Layers.REMOTE_OVERRIDE, "", provider.get())));
             
             return builder;
         };
@@ -118,6 +120,20 @@ public final class LegacyInternalArchaiusModule extends AbstractModule {
     @LibrariesLayer
     CompositeConfig getLegacyLibrariesLayerConfig(ConfigManager configManager) {
         return new LegacyLibraryLayerCompositeConfig(configManager);
+    }
+    
+    @Provides
+    @Singleton
+    @Raw
+    @Deprecated
+    Config getRawConfig(@Raw DefaultConfigManager configManager) {
+        return configManager;
+    }
+    
+    @Provides
+    @Singleton
+    ConfigLoader getConfigLoader(ConfigManager configManager) {
+        return configManager.getConfigLoader();
     }
     
     @Override

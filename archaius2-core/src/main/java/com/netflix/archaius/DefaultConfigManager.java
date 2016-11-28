@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -41,7 +42,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
      * Builder used to construct a DefaultLayeredConfig
      */
     public static class Builder {
-        private DefaultConfigManager rootConfig = new DefaultConfigManager();
+        private DefaultConfigManager configManager = new DefaultConfigManager();
         
         private CascadeStrategy cascadeStrategy = NoCascadeStrategy.INSTANCE;
         
@@ -51,7 +52,8 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
         
         private List<Element<Consumer<ConfigManager>>> actions = new ArrayList<>();
         
-        private Builder() {
+        private Builder(DefaultConfigManager configManager) {
+            this.configManager = configManager;
         }
         
         /**
@@ -62,7 +64,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder withCascadeStrategy(CascadeStrategy strategy) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
+            Preconditions.checkState(configManager != null, "Builder already built");
             this.cascadeStrategy = strategy;
             return this;
         }
@@ -75,7 +77,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder withConfigName(String configName) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
+            Preconditions.checkState(configManager != null, "Builder already built");
             this.configName = configName;
             return this;
         }
@@ -88,7 +90,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder addReader(ConfigReader reader) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
+            Preconditions.checkState(configManager != null, "Builder already built");
             configLoaderBuilder.withConfigReader(reader);
             return this;
         }
@@ -99,8 +101,8 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder withDecoder(Decoder decoder) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
-            rootConfig.setDecoder(decoder);
+            Preconditions.checkState(configManager != null, "Builder already built");
+            configManager.setDecoder(decoder);
             return this;
         }
         
@@ -113,8 +115,9 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder addResourceToLayer(Key layer, String resourceName) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
+            Preconditions.checkState(configManager != null, "Builder already built");
             Preconditions.checkState(resourceName != null, "Resource name must not be empty");
+            LOG.info("Adding config {} to layer {}", resourceName, layer);
             actions.add(Element.create(layer, resourceName, (ConfigManager manager) -> manager.addResourceToLayer(layer, resourceName)));
             return this;
         }
@@ -129,8 +132,9 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder addResourceToLayer(Key layer, String resourceName, Function<ConfigLoader.Loader, ConfigLoader.Loader> loader) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
+            Preconditions.checkState(configManager != null, "Builder already built");
             Preconditions.checkState(resourceName != null , "Resource name must not be empty");
+            LOG.info("Adding config {} to layer {}", resourceName, layer);
             actions.add(Element.create(layer, resourceName, (ConfigManager manager) -> manager.addResourceToLayer(layer, resourceName)));
             return this;
         }
@@ -145,8 +149,9 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder addConfigToLayer(Key layer, String name, Properties props) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
-           actions.add(Element.create(layer, name, (ConfigManager manager) -> manager.addConfigToLayer(layer, name, props)));
+            Preconditions.checkState(configManager != null, "Builder already built");
+            LOG.info("Adding config {} to layer {}", name, layer);
+            actions.add(Element.create(layer, name, (ConfigManager manager) -> manager.addConfigToLayer(layer, name, props)));
             return this;
         }
         
@@ -160,7 +165,8 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @return Chainable builder
          */
         public Builder addConfigToLayer(Key layer, String name, Config config) {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
+            Preconditions.checkState(configManager != null, "Builder already built");
+            LOG.info("Adding config {} to layer {}", name, layer);
             actions.add(Element.create(layer, name, (ConfigManager manager) -> manager.addConfigToLayer(layer, name, config)));
             return this;
         }
@@ -176,13 +182,18 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
             actions.add(Element.create(layer, "", consumer));
             return this;
         }
+        
+        @Deprecated
+        public ConfigManager getRawConfigManager() {
+            return configManager;
+        }
 
         public ConfigManager build() {
-            Preconditions.checkState(rootConfig != null, "Builder already built");
+            Preconditions.checkState(configManager != null, "Builder already built");
             
-            rootConfig.configLoader = configLoaderBuilder
+            configManager.configLoader = configLoaderBuilder
                     .withDefaultCascadingStrategy(cascadeStrategy)
-                    .withStrLookup(ConfigStrLookup.from(rootConfig))
+                    .withStrLookup(ConfigStrLookup.from(configManager))
                     .build();
             
             // We do this here and not in withConfigName() so the main application configuration 
@@ -194,16 +205,20 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
             try {
                 // Add the actions in layer and insertion order.
                 actions.sort(EntryComparator);
-                actions.forEach(consumer -> consumer.value.accept(rootConfig));
-                return rootConfig;
+                actions.forEach(consumer -> consumer.value.accept(configManager));
+                return configManager;
             } finally { 
-                rootConfig = null;
+                configManager = null;
             }
         }
     }
     
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new DefaultConfigManager());
+    }
+    
+    public static Builder builder(DefaultConfigManager configManager) {
+        return new Builder(configManager);
     }
     
     private static class Element<T> {
@@ -265,11 +280,16 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
                 return false;
             return true;
         }
+
+        @Override
+        public String toString() {
+            return "Element [layer=" + layer + ", name=" + name + ", id=" + id + ", value=" + value + "]";
+        }
     }
     
     private static final Comparator<Element<?>> EntryComparator = (Element<?> o1, Element<?> o2) -> {
         if (o1.layer != o2.layer) {
-            int result = o2.layer.getOrder() - o1.layer.getOrder();
+            int result = o1.layer.getOrder() - o2.layer.getOrder();
             if (result != 0) {
                 return result;
             }
@@ -297,8 +317,15 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     private ConfigLoader configLoader;
     private volatile State state = new State();
     private final ConfigListener listener;
+    private Set<String> loadedResources = new HashSet<>();
     
-    private DefaultConfigManager() {
+    /**
+     * This method isn't really deprecated but was made public for backwards compatibility.
+     * DefaultConfigManager should only be created using the builder.
+     */
+    @Deprecated
+    public DefaultConfigManager() {
+        
         listener = new ConfigListener() {
             @Override
             public void onConfigAdded(Config config) {
@@ -323,19 +350,22 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     }
     
     @Override
-    public void addResourceToLayer(Key layer, String resourceName) {
-        Preconditions.checkArgument(resourceName != null, "Key must have a resource name");
-        addConfigToLayer(layer, resourceName, configLoader.newLoader().load(resourceName));
+    public synchronized void addResourceToLayer(Key layer, String resourceName) {
+        addResourceToLayer(layer, resourceName, loader -> loader);
     }
 
     @Override
-    public void addResourceToLayer(Key layer, String resourceName, Function<Loader, Loader> loader) {
+    public synchronized void addResourceToLayer(Key layer, String resourceName, Function<Loader, Loader> loader) {
+        if (!loadedResources.add(resourceName)) {
+            LOG.info("Resource {} already loaded", resourceName);
+            return;
+        }
         Preconditions.checkArgument(!resourceName.isEmpty(), "Key must have a resource name");
         addConfigToLayer(layer, resourceName, loader.apply(configLoader.newLoader()).load(resourceName));
     }
 
     @Override
-    public void addConfigToLayer(Key layer, String name, Properties props) {
+    public synchronized void addConfigToLayer(Key layer, String name, Properties props) {
         addConfigToLayer(layer, name, MapConfig.from(props));
     }
 
@@ -478,5 +508,11 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     @Override
     public Iterable<String> getConfigNames() {
         return state.elements.stream().map(item -> item.getName()).collect(Collectors.toList());
+    }
+
+    @Override
+    @Deprecated
+    public ConfigLoader getConfigLoader() {
+        return configLoader;
     }
 }
