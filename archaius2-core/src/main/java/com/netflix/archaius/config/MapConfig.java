@@ -24,6 +24,7 @@ import java.util.Properties;
 /**
  * Config backed by an immutable map.
  */
+@Deprecated
 public class MapConfig extends AbstractConfig {
 
     /**

@@ -18,6 +18,7 @@ package com.netflix.archaius.config;
 import java.util.Iterator;
 import java.util.Map;
 
+@Deprecated
 public class EnvironmentConfig extends AbstractConfig {
 
     public static final EnvironmentConfig INSTANCE = new EnvironmentConfig();

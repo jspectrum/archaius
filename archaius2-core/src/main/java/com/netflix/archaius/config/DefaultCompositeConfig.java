@@ -45,6 +45,7 @@ import com.netflix.archaius.api.exceptions.ConfigException;
  * TODO: Resolve method to collapse all the child configurations into a single config
  * TODO: Combine children and lookup into a single LinkedHashMap
  */
+@Deprecated
 public class DefaultCompositeConfig extends AbstractConfig implements com.netflix.archaius.api.config.CompositeConfig {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultCompositeConfig.class);
     

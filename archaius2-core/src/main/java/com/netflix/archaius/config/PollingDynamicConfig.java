@@ -37,6 +37,7 @@ import com.netflix.archaius.config.polling.PollingResponse;
  * @author elandau
  *
  */
+@Deprecated
 public class PollingDynamicConfig extends AbstractConfig {
     private static final Logger LOG = LoggerFactory.getLogger(PollingDynamicConfig.class);
     

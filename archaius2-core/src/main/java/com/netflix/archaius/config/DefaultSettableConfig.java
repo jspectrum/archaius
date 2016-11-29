@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.config.SettableConfig;
 
+@Deprecated
 public class DefaultSettableConfig extends AbstractConfig implements SettableConfig {
     private ConcurrentMap<String, Object> props = new ConcurrentHashMap<String, Object>();
     

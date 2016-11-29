@@ -34,6 +34,7 @@ import com.netflix.archaius.interpolate.ConfigStrLookup;
  * @author elandau
  *
  */
+@Deprecated
 public class PrefixedViewConfig extends AbstractConfig {
     private final Config config;
     private final String prefix;

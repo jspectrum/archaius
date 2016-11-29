@@ -17,6 +17,7 @@ package com.netflix.archaius.config;
 
 import java.util.Iterator;
 
+@Deprecated
 public class SystemConfig extends AbstractConfig {
 
     public static final SystemConfig INSTANCE = new SystemConfig();

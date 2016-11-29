@@ -18,6 +18,7 @@ package com.netflix.archaius.config;
 import java.util.Collections;
 import java.util.Iterator;
 
+@Deprecated
 public final class EmptyConfig extends AbstractConfig {
 
     public static final EmptyConfig INSTANCE = new EmptyConfig();
