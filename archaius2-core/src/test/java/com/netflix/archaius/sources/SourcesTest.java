@@ -38,7 +38,7 @@ public class SourcesTest {
 //        Integer[] ar = resolvingSource.get(Integer[].class, "d").get();
 //        System.out.println(Arrays.asList(resolvingSource.get(Integer[].class, "d").get()));
 //        int[] ar2 = resolvingSource.get(int[].class, "d").get();
-        boolean[] b = (boolean[]) resolvingSource.convert("bool", boolean[].class).get();
+        boolean[] b = (boolean[]) resolvingSource.resolve("bool", boolean[].class).get();
     }
     
     @Test

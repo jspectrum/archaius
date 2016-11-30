@@ -1,4 +1,4 @@
-package com.netflix.archaius.sources;
+package com.netflix.archaius.resolvers;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
@@ -8,28 +8,31 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import com.netflix.archaius.api.PropertyResolver;
+import com.netflix.archaius.api.ValueResolver;
 import com.netflix.archaius.api.PropertySource;
 
 public class PropertyResolverBuilder {
     private final Map<Type, Function<String, ?>> dynamic = new ConcurrentHashMap<>();
     private final Map<Type, Function<String, ?>> known;
+    private final ValueResolver interfaceResolver = new InterfacePropertyResolver();
     
     public PropertyResolverBuilder() {
         known = new IdentityHashMap<>(75);
         known.putAll(StringPropertyResolvers.getDefaultStringResolvers());
     }
 
-    public PropertyResolver build() {
-        return new PropertyResolver() {
+    public ValueResolver build() {
+        return new ValueResolver() {
             @SuppressWarnings("unchecked")
             @Override
-            public <T> Optional<T> resolve(PropertySource source, String key, Type type, PropertyResolver resolver) {
+            public <T> Optional<T> resolve(PropertySource source, String key, Type type, ValueResolver resolver) {
                 return source.getProperty(key).map(value -> {
                     if (value.getClass() == String.class) {
                         return (T) getStringResolver(type).apply((String)value);
                     } else if (type.equals(value.getClass())) {
                         return (T) value;
+                    } else if (type == Class.class) {
+                        return (T)interfaceResolver.resolve(source, key, type, resolver).orElse(null);
                     } else {
                         throw new IllegalArgumentException("Unexpected type " + value.getClass() + " for '" + key + "'. Expecting String or " + type.getTypeName());
                     }

@@ -157,12 +157,12 @@ public class PropertySourceConfig implements Config {
 
     @Override
     public <T> T get(Class<T> type, String key) {
-        return (T) source.convert(key, type).get();
+        return (T) source.resolve(key, type).get();
     }
 
     @Override
     public <T> T get(Class<T> type, String key, T defaultValue) {
-        return (T) source.convert(key, type).orElse(defaultValue);
+        return (T) source.resolve(key, type).orElse(defaultValue);
     }
 
     @Override

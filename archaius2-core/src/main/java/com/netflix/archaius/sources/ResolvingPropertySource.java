@@ -5,65 +5,66 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import com.netflix.archaius.api.PropertyConverter;
 import com.netflix.archaius.api.PropertyResolver;
+import com.netflix.archaius.api.ValueResolver;
 import com.netflix.archaius.api.PropertySource;
+import com.netflix.archaius.resolvers.PropertyResolverBuilder;
 
-public class ResolvingPropertySource extends DelegatingPropertySource implements PropertyConverter {
+public class ResolvingPropertySource extends DelegatingPropertySource implements PropertyResolver {
 
-    private final PropertyResolver resolver;
+    private final ValueResolver resolver;
     
     public ResolvingPropertySource(PropertySource delegate) {
         this(delegate, new PropertyResolverBuilder().build());
     }
     
-    public ResolvingPropertySource(PropertySource delegate, PropertyResolver resolver) {
+    public ResolvingPropertySource(PropertySource delegate, ValueResolver resolver) {
         super(delegate);
         this.resolver = resolver;
     }
     
     public Optional<Long> getLong(String key) {
-        return convert(key, Long.class);
+        return resolve(key, Long.class);
     }
 
     public Optional<String> getString(String key) {
-        return convert(key, String.class);
+        return resolve(key, String.class);
     }
 
     public Optional<Double> getDouble(String key) {
-        return convert(key, Double.class);
+        return resolve(key, Double.class);
     }
 
     public Optional<Integer> getInteger(String key) {
-        return convert(key, Integer.class);
+        return resolve(key, Integer.class);
     }
 
     public Optional<Boolean> getBoolean(String key) {
-        return convert(key, Boolean.class);
+        return resolve(key, Boolean.class);
     }
 
     public Optional<Short> getShort(String key) {
-        return convert(key, Short.class);
+        return resolve(key, Short.class);
     }
 
     public Optional<BigInteger> getBigInteger(String key) {
-        return convert(key, BigInteger.class);
+        return resolve(key, BigInteger.class);
     }
 
     public Optional<BigDecimal> getBigDecimal(String key) {
-        return convert(key, BigDecimal.class);
+        return resolve(key, BigDecimal.class);
     }
 
     public Optional<Float> getFloat(String key) {
-        return convert(key, Float.class);
+        return resolve(key, Float.class);
     }
 
     public Optional<Byte> getByte(String key) {
-        return convert(key, Byte.class);
+        return resolve(key, Byte.class);
     }
 
     @Override
-    public <T> Optional<T> convert(String key, Type type) {
+    public <T> Optional<T> resolve(String key, Type type) {
         return resolver.resolve(this, key, type, resolver);
     }
     

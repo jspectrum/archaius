@@ -1,4 +1,4 @@
-package com.netflix.archaius.sources;
+package com.netflix.archaius.resolvers;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
