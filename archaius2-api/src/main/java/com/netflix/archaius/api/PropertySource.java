@@ -37,4 +37,6 @@ public interface PropertySource {
      * @return True if there are no properties in the PropertySource
      */
     boolean isEmpty();
+    
+    PropertySource subset(String prefix);
 }

@@ -69,4 +69,9 @@ public class PollingPropertySource implements PropertySource {
     public boolean isEmpty() {
         return delegate.isEmpty();
     }
+
+    @Override
+    public PropertySource subset(String prefix) {
+        return delegate.subset(prefix);
+    }
 }

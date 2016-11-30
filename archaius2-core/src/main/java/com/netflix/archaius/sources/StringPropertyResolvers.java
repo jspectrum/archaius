@@ -1,6 +1,5 @@
-package com.netflix.archaius.resolvers;
+package com.netflix.archaius.sources;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -16,30 +15,23 @@ import java.time.OffsetTime;
 import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import javax.xml.bind.DatatypeConverter;
 
-import com.netflix.archaius.api.PropertyNode;
-import com.netflix.archaius.api.PropertyResolver;
-import com.netflix.archaius.exceptions.ParseException;
-
-public final class PropertyResolverRegistry implements PropertyResolver {
+final class StringPropertyResolvers {
+    private StringPropertyResolvers() {}
     
-    private Map<Class<?>, Function<String, ?>> methods = new ConcurrentHashMap<>();
+    private static final Map<Type, Function<String, ?>> stringResolvers = new IdentityHashMap<>(75);
     
-    private Map<Type, Function<String, ?>> stringResolvers;
-    
-    public PropertyResolverRegistry() {
-        stringResolvers = new IdentityHashMap<>(75);
+    static {
         stringResolvers.put(String.class, v->v);
         stringResolvers.put(boolean.class, v->{
             if (v.equalsIgnoreCase("true") || v.equalsIgnoreCase("yes") || v.equalsIgnoreCase("on")) {
@@ -48,8 +40,7 @@ public final class PropertyResolverRegistry implements PropertyResolver {
             else if (v.equalsIgnoreCase("false") || v.equalsIgnoreCase("no") || v.equalsIgnoreCase("off")) {
                 return Boolean.FALSE;
             }
-            throw new ParseException("Error parsing value '" + v, new Exception("Expected one of [true, yes, on, false, no, off]"));
-
+            throw new IllegalArgumentException("Error parsing value '" + v, new Exception("Expected one of [true, yes, on, false, no, off]"));
         });
         stringResolvers.put(Boolean.class, stringResolvers.get(boolean.class));
         stringResolvers.put(Integer.class, Integer::valueOf);
@@ -81,54 +72,12 @@ public final class PropertyResolverRegistry implements PropertyResolver {
         stringResolvers.put(Currency.class, Currency::getInstance);
         stringResolvers.put(BitSet.class, v->BitSet.valueOf(DatatypeConverter.parseHexBinary(v)));
     }
-
-    private Function<String, ?> getStringResolver(Type type) {
-        if (stringResolvers.containsKey(type)) {
-            return stringResolvers.get(type);
-        }
-        
-        if (type instanceof Class) {
-            final Class<?> cls = (Class<?>)type;
-            if (cls.isArray()) {
-                Function<String, ?> resolver = getStringResolver(cls.getComponentType());
-                if (resolver != null) {
-                    return encoded -> {
-                        String[] elements = encoded.split(",");
-                        Object[] ar = (Object[]) Array.newInstance(cls.getComponentType(), elements.length);
-                        for (int i = 0; i < elements.length; i++) {
-                            final String element = elements[i];
-                            ar[i] = resolver.apply(element);
-                        }
-                        return ar;
-                    };
-                }
-            } else {
-                return methods.computeIfAbsent(cls, a -> getStringConverterForType(a));
-            }
-        }
-        
-        throw new IllegalArgumentException("Resolver not found for type " + type);
+    
+    static final Map<Type, Function<String, ?>> getDefaultStringResolvers() {
+        return Collections.unmodifiableMap(stringResolvers);
     }
     
-    @SuppressWarnings({ "unchecked" })
-    @Override
-    public <T> Optional<T> getValue(Type type, PropertyNode node, Function<String, String> interpolator) {
-        return (Optional<T>) node.getValue().map(value -> {
-            try {
-                if (value.getClass() == String.class) {
-                    return getStringResolver(type).apply(interpolator.apply((String)value));
-                } else if (type.equals(value.getClass())) {
-                    return value;
-                } else {
-                    throw new IllegalArgumentException("Bad type " + type);
-                }
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Unable to get value for " + node, e);
-            }
-        });
-    }
-
-    private static Function<String, ?> getStringConverterForType(Class<?> cls) {
+    static Function<String, ?> forClass(Class<?> cls) {
         // Next look a valueOf(String) static method
         try {
             Method method;

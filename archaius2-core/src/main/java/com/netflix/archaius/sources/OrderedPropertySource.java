@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.OrderedKey;
 import com.netflix.archaius.api.PropertySource;
@@ -89,7 +90,7 @@ public class OrderedPropertySource implements PropertySource {
 
     private static class State {
         private final List<Element> elements;
-        private final Map<String, PropertySource> properties = new HashMap<>();
+        private final SortedMap<String, Object> properties = new TreeMap<>();
         
         State(List<Element> entries) {
             this.elements = entries;
@@ -97,7 +98,7 @@ public class OrderedPropertySource implements PropertySource {
                 .stream()
                 .map(Element::getPropertySource)
                 .forEach(
-                    source -> source.forEach((k, v) -> properties.putIfAbsent(k, source))
+                    source -> source.forEach((k, v) -> properties.putIfAbsent(k, v))
                 );
         }
         
@@ -120,7 +121,7 @@ public class OrderedPropertySource implements PropertySource {
 
     @Override
     public Optional<Object> getProperty(String key) {
-        return Optional.ofNullable(state.get().properties.get(key).getProperty(key));
+        return Optional.ofNullable(state.get().properties.get(key));
     }
 
     @Override
@@ -145,5 +146,43 @@ public class OrderedPropertySource implements PropertySource {
     @Override
     public boolean isEmpty() {
         return state.get().properties.isEmpty();
+    }
+
+    @Override
+    public PropertySource subset(String prefix) {
+        return new PropertySource() {
+            private SortedMap<String, Object> properties = state.get().properties.subMap(prefix + ".", prefix + "./uffff");
+            
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public Optional<Object> getProperty(String name) {
+                return Optional.ofNullable(properties.get(prefix + "." + name));
+            }
+
+            @Override
+            public void forEach(BiConsumer<String, Object> consumer) {
+                properties.forEach((key, value) -> consumer.accept(key.substring(prefix.length()), value));
+            }
+
+            @Override
+            public Collection<String> getPropertyNames() {
+                return properties.keySet().stream()
+                        .map(key -> key.substring(prefix.length())).collect(Collectors.toList());
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return properties.isEmpty();
+            }
+            
+            public PropertySource subset(String childPrefix) {
+                return subset(prefix + "." + childPrefix);
+            }
+
+        };
     }
 }

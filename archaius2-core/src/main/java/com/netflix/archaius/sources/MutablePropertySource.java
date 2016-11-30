@@ -52,4 +52,10 @@ public class MutablePropertySource implements PropertySource, DynamicPropertySou
     public boolean isEmpty() {
         return properties.isEmpty();
     }
+
+    @Override
+    public PropertySource subset(String prefix) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
