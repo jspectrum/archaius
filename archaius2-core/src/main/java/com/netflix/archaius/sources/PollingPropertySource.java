@@ -74,4 +74,16 @@ public class PollingPropertySource implements PropertySource {
     public PropertySource subset(String prefix) {
         return delegate.subset(prefix);
     }
+
+    @Override
+    public void addListener(Listener listener) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void removeListener(Listener listener) {
+        // TODO Auto-generated method stub
+        
+    }
 }

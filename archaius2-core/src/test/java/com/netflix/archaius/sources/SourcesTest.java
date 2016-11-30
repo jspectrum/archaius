@@ -6,6 +6,9 @@ import org.junit.Test;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.config.PropertySourceConfig;
+import com.netflix.archaius.sources.InterpolatingPropertySource;
+import com.netflix.archaius.sources.MapPropertySource;
+import com.netflix.archaius.sources.ResolvingPropertySource;
 
 public class SourcesTest {
     @Test
@@ -25,7 +28,7 @@ public class SourcesTest {
                 .put("e", "${c}")
                 .build();
         
-        ResolvingPropertySource resolvingSource = new ResolvingPropertySource(source);
+        ResolvingPropertySource resolvingSource = new ResolvingPropertySource(new InterpolatingPropertySource(source));
         
         PropertySourceConfig config = new PropertySourceConfig(resolvingSource);
         
@@ -35,7 +38,7 @@ public class SourcesTest {
 //        Integer[] ar = resolvingSource.get(Integer[].class, "d").get();
 //        System.out.println(Arrays.asList(resolvingSource.get(Integer[].class, "d").get()));
 //        int[] ar2 = resolvingSource.get(int[].class, "d").get();
-        boolean[] b = resolvingSource.getValue("bool", boolean[].class).get();
+        boolean[] b = (boolean[]) resolvingSource.convert("bool", boolean[].class).get();
     }
     
     @Test

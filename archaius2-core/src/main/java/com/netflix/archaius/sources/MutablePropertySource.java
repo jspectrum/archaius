@@ -6,10 +6,9 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
 
-import com.netflix.archaius.api.DynamicPropertySource;
 import com.netflix.archaius.api.PropertySource;
 
-public class MutablePropertySource implements PropertySource, DynamicPropertySource {
+public class MutablePropertySource implements PropertySource {
     private final Map<String, Object> properties;
     private final String name;
     
@@ -55,7 +54,7 @@ public class MutablePropertySource implements PropertySource, DynamicPropertySou
 
     @Override
     public PropertySource subset(String prefix) {
-        // TODO Auto-generated method stub
+        // TODO:
         return null;
     }
 }

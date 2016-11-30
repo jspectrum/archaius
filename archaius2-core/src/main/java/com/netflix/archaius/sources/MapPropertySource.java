@@ -114,6 +114,22 @@ public class MapPropertySource implements PropertySource {
             public PropertySource subset(String childPrefix) {
                 return subset(prefix + "." + childPrefix);
             }
+
+            @Override
+            public void addListener(Listener ignore) {
+            }
+
+            @Override
+            public void removeListener(Listener ignore) {
+            }
         };
+    }
+
+    @Override
+    public void addListener(Listener ignore) {
+    }
+
+    @Override
+    public void removeListener(Listener ignore) {
     }
 }

@@ -183,6 +183,30 @@ public class OrderedPropertySource implements PropertySource {
                 return subset(prefix + "." + childPrefix);
             }
 
+            @Override
+            public void addListener(Listener listener) {
+                // TODO Auto-generated method stub
+                
+            }
+
+            @Override
+            public void removeListener(Listener listener) {
+                // TODO Auto-generated method stub
+                
+            }
+
         };
+    }
+
+    @Override
+    public void addListener(Listener listener) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void removeListener(Listener listener) {
+        // TODO Auto-generated method stub
+        
     }
 }

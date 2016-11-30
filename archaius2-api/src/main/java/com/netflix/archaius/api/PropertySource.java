@@ -9,6 +9,10 @@ import java.util.function.BiConsumer;
  * including strings and primitives.
  */
 public interface PropertySource {
+    interface Listener {
+        void onChanged(PropertySource propertySource);
+    }
+    
     /**
      * @return Name of the property source.  This could be an arbitrary name or a file name from whence the
      * configuration was loaded
@@ -39,4 +43,9 @@ public interface PropertySource {
     boolean isEmpty();
     
     PropertySource subset(String prefix);
+    
+    void addListener(Listener listener);
+    
+    void removeListener(Listener listener);
+
 }
