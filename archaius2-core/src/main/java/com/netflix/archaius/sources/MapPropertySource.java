@@ -92,17 +92,23 @@ public class MapPropertySource implements PropertySource {
 
             @Override
             public Optional<Object> getProperty(String name) {
-                return Optional.ofNullable(subProperties.get(prefix + "." + name));
+                return Optional
+                    .ofNullable(subProperties.get(prefix + "." + name));
             }
 
             @Override
             public void forEach(BiConsumer<String, Object> consumer) {
-                subProperties.forEach((key, value) -> consumer.accept(key.substring(prefix.length()+1), value));
+                subProperties
+                    .forEach((key, value) -> consumer.accept(key.substring(prefix.length()+1), value));
             }
 
             @Override
             public Collection<String> getPropertyNames() {
-                return subProperties.keySet().stream().map(key -> key.substring(prefix.length()+1)).collect(Collectors.toList());
+                return subProperties
+                    .keySet()
+                    .stream()
+                    .map(key -> key.substring(prefix.length()+1))
+                    .collect(Collectors.toList());
             }
 
             @Override
