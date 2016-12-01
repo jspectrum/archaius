@@ -1,22 +1,18 @@
 package com.netflix.archaius.sources;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
+import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.OrderedKey;
 import com.netflix.archaius.api.PropertySource;
 
-public class OrderedPropertySource implements PropertySource {
+public class OrderedPropertySource extends DelegatingPropertySource {
 
     private static class Element {
         private final OrderedKey layer;
@@ -88,18 +84,21 @@ public class OrderedPropertySource implements PropertySource {
         return o2.insertionOrder - o1.insertionOrder;
     };
 
-    private static class State {
+    private class State {
         private final List<Element> elements;
-        private final SortedMap<String, Object> properties = new TreeMap<>();
+        private final PropertySource source;
         
         State(List<Element> entries) {
+            ImmutablePropertySource.Builder builder = ImmutablePropertySource.builder();
             this.elements = entries;
             this.elements
                 .stream()
                 .map(Element::getPropertySource)
                 .forEach(
-                    source -> source.forEach((k, v) -> properties.putIfAbsent(k, v))
+                    source -> source.forEach((k, v) -> builder.putIfAbsent(k, v))
                 );
+            
+            source = builder.build();
         }
         
         State withEntries(List<Element> entries) {
@@ -112,23 +111,14 @@ public class OrderedPropertySource implements PropertySource {
     }
     
     private final String name;
-    private AtomicReference<State> state = new AtomicReference<>(new State(Collections.emptyList()));
+    private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final AtomicReference<State> state = new AtomicReference<>(new State(Collections.emptyList()));
     
     @Override
     public String getName() {
         return this.name;
     }
 
-    @Override
-    public Optional<Object> getProperty(String key) {
-        return Optional.ofNullable(state.get().properties.get(key));
-    }
-
-    @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
-        state.get().properties.forEach(consumer);
-    }
-    
     public void addPropertySource(OrderedKey layer, PropertySource source) {
         state.getAndUpdate(current -> {
             List<Element> newEntries = new ArrayList<>(current.elements);
@@ -136,22 +126,14 @@ public class OrderedPropertySource implements PropertySource {
             newEntries.sort(ByLayerAndInsertionOrder);
             return current.withEntries(Collections.unmodifiableList(newEntries));
         });
+        
+        source.addListener(listener -> notifyListeners());
     }
     
-    @Override
-    public Collection<String> getPropertyNames() {
-        return state.get().properties.keySet();
-    }
-    
-    @Override
-    public boolean isEmpty() {
-        return state.get().properties.isEmpty();
-    }
-
     @Override
     public PropertySource subset(String prefix) {
-        return new PropertySource() {
-            private SortedMap<String, Object> properties = state.get().properties.subMap(prefix + ".", prefix + "./uffff");
+        PropertySource subset = delegate().subset(prefix);
+        return new DelegatingPropertySource() {
             
             @Override
             public String getName() {
@@ -159,54 +141,35 @@ public class OrderedPropertySource implements PropertySource {
             }
 
             @Override
-            public Optional<Object> getProperty(String name) {
-                return Optional.ofNullable(properties.get(prefix + "." + name));
-            }
-
-            @Override
-            public void forEach(BiConsumer<String, Object> consumer) {
-                properties.forEach((key, value) -> consumer.accept(key.substring(prefix.length()), value));
-            }
-
-            @Override
-            public Collection<String> getPropertyNames() {
-                return properties.keySet().stream()
-                        .map(key -> key.substring(prefix.length())).collect(Collectors.toList());
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return properties.isEmpty();
-            }
-            
             public PropertySource subset(String childPrefix) {
                 return subset(prefix + "." + childPrefix);
             }
 
             @Override
-            public void addListener(Listener listener) {
-                // TODO Auto-generated method stub
-                
+            public Cancellation addListener(Listener listener) {
+                listeners.add(listener);
+                return () -> listeners.remove(listener);
             }
 
             @Override
-            public void removeListener(Listener listener) {
-                // TODO Auto-generated method stub
-                
+            protected PropertySource delegate() {
+                return subset;
             }
-
         };
     }
 
     @Override
-    public void addListener(Listener listener) {
-        // TODO Auto-generated method stub
-        
+    public Cancellation addListener(Listener listener) {
+        listeners.add(listener);
+        return () -> listeners.remove(listener);
+    }
+    
+    protected void notifyListeners() {
+        listeners.forEach(listener -> listener.onChanged(this));
     }
 
     @Override
-    public void removeListener(Listener listener) {
-        // TODO Auto-generated method stub
-        
+    protected PropertySource delegate() {
+        return state.get().source;
     }
 }

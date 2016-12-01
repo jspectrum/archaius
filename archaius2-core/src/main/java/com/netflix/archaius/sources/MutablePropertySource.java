@@ -4,14 +4,17 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 
+import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.PropertySource;
 
 public class MutablePropertySource implements PropertySource {
     private final Map<String, Object> properties;
     private final String name;
-    
+    private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
+
     public MutablePropertySource(String name) {
         this.properties = new TreeMap<>();
         this.name = name;
@@ -38,15 +41,15 @@ public class MutablePropertySource implements PropertySource {
     }
 
     @Override
-    public void addListener(Listener listener) {
-        // TODO:
+    public Cancellation addListener(Listener listener) {
+        listeners.add(listener);
+        return () -> listeners.remove(listener);
     }
-
-    @Override
-    public void removeListener(Listener listener) {
-        // TODO:
+    
+    protected void notifyListeners() {
+        listeners.forEach(listener -> listener.onChanged(this));
     }
-
+    
     @Override
     public boolean isEmpty() {
         return properties.isEmpty();

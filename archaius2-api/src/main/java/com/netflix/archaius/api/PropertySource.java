@@ -20,10 +20,10 @@ public interface PropertySource {
     String getName();
 
     /**
-     * @param name
+     * @param key
      * @return Value for the property 
      */
-    Optional<Object> getProperty(String name);
+    Optional<Object> getProperty(String key);
     
     /**
      * Iterate through all properties of the PropertySource and their values.  
@@ -42,10 +42,19 @@ public interface PropertySource {
      */
     boolean isEmpty();
     
+    /**
+     * @param prefix
+     * @return PropertySource that is a subset of this PropertySource such that
+     *  all properties do no have the prefix.  
+     */
     PropertySource subset(String prefix);
     
-    void addListener(Listener listener);
-    
-    void removeListener(Listener listener);
+    /**
+     * Add a listener that is invoked for any updates to the PropertySource.  To avoid complexity
+     * for figuring out what exactly changes, especially when dealing with interpolation the notification
+     * mechanism simply informs the listener that something had changed.
+     * @param listener
+     */
+    default Cancellation addListener(Listener listener) { return Cancellation.empty(); }
 
 }

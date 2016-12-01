@@ -2,7 +2,7 @@ package com.netflix.archaius.sources;
 
 import java.util.stream.Collectors;
 
-public class SystemPropertySource extends MapPropertySource {
+public class SystemPropertySource extends ImmutablePropertySource {
     public SystemPropertySource(String name) {
         super(name, System.getProperties()
             .entrySet()

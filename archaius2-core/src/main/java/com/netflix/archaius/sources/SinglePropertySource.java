@@ -5,14 +5,15 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.PropertySource;
 
 public class SinglePropertySource implements PropertySource {
-    private final String name;
+    private final String key;
     private final Optional<Object> value;
     
-    public SinglePropertySource(String name, Object value) {
-        this.name = name;
+    public SinglePropertySource(String key, Object value) {
+        this.key = key;
         this.value = Optional.of(value);
     }
 
@@ -22,8 +23,8 @@ public class SinglePropertySource implements PropertySource {
     }
 
     @Override
-    public Optional<Object> getProperty(String name) {
-        if (this.name.equals(name)) {
+    public Optional<Object> getProperty(String key) {
+        if (this.key.equals(key)) {
             return value;
         }
         return Optional.empty();
@@ -31,12 +32,12 @@ public class SinglePropertySource implements PropertySource {
 
     @Override
     public void forEach(BiConsumer<String, Object> consumer) {
-        consumer.accept(name, value.get());
+        consumer.accept(key, value.get());
     }
 
     @Override
     public Collection<String> getPropertyNames() {
-        return Collections.singleton(name);
+        return Collections.singleton(key);
     }
 
     @Override
@@ -50,10 +51,7 @@ public class SinglePropertySource implements PropertySource {
     }
 
     @Override
-    public void addListener(Listener listener) {
-    }
-
-    @Override
-    public void removeListener(Listener listener) {
+    public Cancellation addListener(Listener listener) {
+        return Cancellation.empty();
     }
 }

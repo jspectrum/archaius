@@ -10,9 +10,10 @@ import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 public class InterpolatingPropertySource extends DelegatingPropertySource {
 
     private final Function<Object, Object> interpolator;
+    private final PropertySource delegate;
     
     public InterpolatingPropertySource(PropertySource delegate) {
-        super(delegate);
+        this.delegate = delegate;
         
         StrInterpolator.Lookup lookup = key -> delegate.getProperty(key).map(Object::toString).orElse(null);
         this.interpolator = value -> {
@@ -26,5 +27,19 @@ public class InterpolatingPropertySource extends DelegatingPropertySource {
     @Override
     public Optional<Object> getProperty(String name) {
         return super.getProperty(name).map(interpolator);
+    }
+
+    @Override
+    public PropertySource subset(String prefix) {
+        return new InterpolatingPropertySource(delegate().subset(prefix)) {
+            public PropertySource subset(String childPrefix) {
+                return new InterpolatingPropertySource(delegate().subset(prefix + "." + childPrefix)); 
+            }
+        };
+    }
+
+    @Override
+    protected PropertySource delegate() {
+        return delegate;
     }
 }

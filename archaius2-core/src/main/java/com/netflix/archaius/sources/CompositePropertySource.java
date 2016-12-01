@@ -10,7 +10,10 @@ import java.util.Map;
 
 import com.netflix.archaius.api.PropertySource;
 
-public class CompositePropertySource extends MapPropertySource {
+/**
+ * Immutable property source that is a composite of multiple PropertySource's.
+ */
+public class CompositePropertySource extends ImmutablePropertySource {
     private final List<PropertySource> sources;
     
     private static Map<String, Object> joinSources(Collection<PropertySource> sources) {

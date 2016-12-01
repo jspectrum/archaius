@@ -7,6 +7,6 @@ public interface PropertyResolver {
     <T> Optional<T> get(String key, Type type);
     
     default <T> Optional<T> get(String key, Class<T> type) {
-        return get(key, type);
+        return get(key, (Type)type);
     }
 }

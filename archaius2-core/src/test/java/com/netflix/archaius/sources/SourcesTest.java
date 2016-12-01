@@ -7,7 +7,7 @@ import org.junit.Test;
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.config.PropertySourceConfig;
 import com.netflix.archaius.sources.InterpolatingPropertySource;
-import com.netflix.archaius.sources.MapPropertySource;
+import com.netflix.archaius.sources.ImmutablePropertySource;
 import com.netflix.archaius.sources.ResolvingPropertySource;
 
 public class SourcesTest {
@@ -19,7 +19,7 @@ public class SourcesTest {
     
     @Test
     public void test() {
-        PropertySource source = MapPropertySource.builder()
+        PropertySource source = ImmutablePropertySource.builder()
                 .put("a", "${b}")
                 .put("b", 1.5)
                 .put("d", "1,2,3,4")
@@ -43,7 +43,7 @@ public class SourcesTest {
     
     @Test
     public void prefix() {
-        PropertySource source = MapPropertySource.builder()
+        PropertySource source = ImmutablePropertySource.builder()
             .put("a",   "a1")
             .put("b",   "a2")
             .put("b.c.d", "a3")

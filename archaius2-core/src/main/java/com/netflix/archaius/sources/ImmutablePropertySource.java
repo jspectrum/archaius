@@ -10,10 +10,14 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.PropertySource;
+import com.netflix.archaius.internal.Preconditions;
 
-public class MapPropertySource implements PropertySource {
-    protected final SortedMap<String, Object> properties;
-    protected final String name;
+/**
+ * Immutable PropertySource with a builder for conveniently creating a property source
+ */
+public class ImmutablePropertySource implements PropertySource {
+    protected SortedMap<String, Object> properties;
+    protected String name;
     
     private static final AtomicInteger counter = new AtomicInteger();
 
@@ -30,15 +34,41 @@ public class MapPropertySource implements PropertySource {
      * }
      */
     public static class Builder {
-        SortedMap<String, Object> data = new TreeMap<String, Object>();
+        ImmutablePropertySource source = new ImmutablePropertySource();
         
-        public <T> Builder put(String key, T value) {
-            data.put(key, value.toString());
+        public Builder named(String name) {
+            Preconditions.checkArgument(source != null, "Builder already created");
+            source.name = name;
             return this;
         }
         
-        public MapPropertySource build() {
-            return new MapPropertySource(data);
+        public <T> Builder put(String key, T value) {
+            Preconditions.checkArgument(source != null, "Builder already created");
+            source.properties.put(key, value.toString());
+            return this;
+        }
+        
+        public <T> Builder putAll(Map<String, Object> values) {
+            Preconditions.checkArgument(source != null, "Builder already created");
+            source.properties.putAll(values);
+            return this;
+        }
+        
+        public <T> Builder putIfAbsent(String key, T value) {
+            Preconditions.checkArgument(source != null, "Builder already created");
+            source.properties.putIfAbsent(key, value);
+            return null;
+        }
+
+        public ImmutablePropertySource build() {
+            try {
+                if (source.name == null) {
+                    source.name = "map-" + counter.incrementAndGet();
+                }
+                return source;
+            } finally {
+                source = null;
+            }
         }
     }
     
@@ -46,18 +76,23 @@ public class MapPropertySource implements PropertySource {
         return new Builder();
     }
     
-    public MapPropertySource(Map<String, Object> data) {
-        this("map-" + counter.incrementAndGet(), data);
+    private ImmutablePropertySource() {
+        this(null, new TreeMap<>());
     }
     
-    public MapPropertySource(String name, Map<String, Object> data) {
+    protected ImmutablePropertySource(String name, SortedMap<String, Object> values) {
         this.name = name;
-        this.properties = new TreeMap<>(data);
+        this.properties = values;
+    }
+    
+    protected ImmutablePropertySource(String name, Map<String, Object> values) {
+        this.name = name;
+        this.properties = new TreeMap<>(values);
     }
     
     @Override
     public String getName() {
-        return "mutable";
+        return name;
     }
 
     @Override
@@ -87,7 +122,7 @@ public class MapPropertySource implements PropertySource {
         return new PropertySource() {
             @Override
             public String getName() {
-                return "mutable";
+                return name;
             }
 
             @Override
@@ -118,24 +153,8 @@ public class MapPropertySource implements PropertySource {
             
             @Override
             public PropertySource subset(String childPrefix) {
-                return subset(prefix + "." + childPrefix);
-            }
-
-            @Override
-            public void addListener(Listener ignore) {
-            }
-
-            @Override
-            public void removeListener(Listener ignore) {
+                return ImmutablePropertySource.this.subset(prefix + "." + childPrefix);
             }
         };
-    }
-
-    @Override
-    public void addListener(Listener ignore) {
-    }
-
-    @Override
-    public void removeListener(Listener ignore) {
     }
 }

@@ -13,14 +13,14 @@ import com.netflix.archaius.resolvers.PropertyResolverBuilder;
 public class ResolvingPropertySource extends DelegatingPropertySource implements PropertyResolver {
 
     private final ValueResolver resolver;
+    private final PropertySource delegate;
     
     public ResolvingPropertySource(PropertySource delegate) {
         this(delegate, new PropertyResolverBuilder().build());
     }
     
     public ResolvingPropertySource(PropertySource delegate, ValueResolver resolver) {
-        super(new InterpolatingPropertySource(delegate));
-        
+        this.delegate = new InterpolatingPropertySource(delegate);
         this.resolver = resolver;
     }
     
@@ -76,5 +76,10 @@ public class ResolvingPropertySource extends DelegatingPropertySource implements
                 return new ResolvingPropertySource(delegate().subset(prefix + "." + childPrefix)); 
             }
         };
+    }
+
+    @Override
+    protected PropertySource delegate() {
+        return delegate;
     }
 }

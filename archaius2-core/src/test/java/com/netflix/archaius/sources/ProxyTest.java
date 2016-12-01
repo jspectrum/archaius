@@ -17,14 +17,14 @@ public class ProxyTest {
     @Test
     public void test() {
         ResolvingPropertySource source = new ResolvingPropertySource(
-            MapPropertySource.builder()
+            ImmutablePropertySource.builder()
                 .put("foo.string",  "a1")
                 .put("foo.integer", "2")
                 .put("foo.list", "a,b,c")
                 .put("foo.map", "a=1,b=2,c=3")
-                .put("foo.map.1", "1")
-                .put("foo.map.2", "2")
-                .put("foo.map.3", "3")
+                .put("foo.map.a1", "1")
+                .put("foo.map.a2", "2")
+                .put("foo.map.a3", "3")
                 .build());
         
         
