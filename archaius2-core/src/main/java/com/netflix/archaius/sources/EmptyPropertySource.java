@@ -31,6 +31,10 @@ public class EmptyPropertySource implements PropertySource {
     }
 
     @Override
+    public void forEach(String prefix, BiConsumer<String, Object> consumer) {
+    }
+
+    @Override
     public Collection<String> getPropertyNames() {
         return Collections.emptySet();
     }
@@ -38,11 +42,6 @@ public class EmptyPropertySource implements PropertySource {
     @Override
     public boolean isEmpty() {
         return true;
-    }
-
-    @Override
-    public PropertySource subset(String prefix) {
-        return this;
     }
 
     @Override

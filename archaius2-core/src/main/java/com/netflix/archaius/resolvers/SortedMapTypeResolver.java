@@ -2,8 +2,8 @@ package com.netflix.archaius.resolvers;
 
 import java.util.TreeMap;
 
-public class SortedMapPropertyResolver extends MapPropertyResolver {
-    SortedMapPropertyResolver() {
+public class SortedMapTypeResolver extends MapTypeResolver {
+    SortedMapTypeResolver() {
         super(TreeMap::new);
     }
 }

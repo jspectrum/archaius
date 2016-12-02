@@ -7,7 +7,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.internal.Preconditions;
@@ -116,45 +115,11 @@ public class ImmutablePropertySource implements PropertySource {
     }
 
     @Override
-    public PropertySource subset(String prefix) {
-        SortedMap<String, Object> subProperties = properties.subMap(prefix + ".", prefix + "." + Character.MAX_VALUE);
-        
-        return new PropertySource() {
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public Optional<Object> getProperty(String name) {
-                return Optional
-                    .ofNullable(subProperties.get(prefix + "." + name));
-            }
-
-            @Override
-            public void forEach(BiConsumer<String, Object> consumer) {
-                subProperties
-                    .forEach((key, value) -> consumer.accept(key.substring(prefix.length()+1), value));
-            }
-
-            @Override
-            public Collection<String> getPropertyNames() {
-                return subProperties
-                    .keySet()
-                    .stream()
-                    .map(key -> key.substring(prefix.length()+1))
-                    .collect(Collectors.toList());
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return subProperties.isEmpty();
-            }
-            
-            @Override
-            public PropertySource subset(String childPrefix) {
-                return ImmutablePropertySource.this.subset(prefix + "." + childPrefix);
-            }
-        };
+    public void forEach(String prefix, BiConsumer<String, Object> consumer) {
+        if (!prefix.endsWith(".")) {
+            forEach(prefix + ".", consumer);
+        } else {
+            properties.subMap(prefix, prefix + Character.MAX_VALUE).forEach(consumer);
+        }
     }
 }

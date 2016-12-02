@@ -25,6 +25,11 @@ public abstract class DelegatingPropertySource implements PropertySource {
     }
 
     @Override
+    public void forEach(String prefix, BiConsumer<String, Object> consumer) {
+        delegate().forEach(prefix, consumer);
+    }
+
+    @Override
     public Collection<String> getPropertyNames() {
         return delegate().getPropertyNames();
     }

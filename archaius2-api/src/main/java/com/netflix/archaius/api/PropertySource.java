@@ -31,6 +31,8 @@ public interface PropertySource {
      */
     void forEach(BiConsumer<String, Object> consumer);
     
+    void forEach(String prefix, BiConsumer<String, Object> consumer);
+    
     /**
      * @return Immutable collection of all property names.  For dynamic PropertySources it's still possible
      * for a property name in this collection to no longer exist when getProperty is called.
@@ -41,13 +43,6 @@ public interface PropertySource {
      * @return True if there are no properties in the PropertySource
      */
     boolean isEmpty();
-    
-    /**
-     * @param prefix
-     * @return PropertySource that is a subset of this PropertySource such that
-     *  all properties do no have the prefix.  
-     */
-    PropertySource subset(String prefix);
     
     /**
      * Add a listener that is invoked for any updates to the PropertySource.  To avoid complexity

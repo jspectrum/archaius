@@ -36,6 +36,15 @@ public class MutablePropertySource implements PropertySource {
     }
 
     @Override
+    public void forEach(String prefix, BiConsumer<String, Object> consumer) {
+        if (!prefix.endsWith(".")) {
+            forEach(prefix + ".", consumer);
+        } else {
+//            properties.subMap(prefix, prefix + Character.MAX_VALUE).forEach(consumer);
+        }
+    }
+
+    @Override
     public Collection<String> getPropertyNames() {
         return properties.keySet();
     }
@@ -53,11 +62,5 @@ public class MutablePropertySource implements PropertySource {
     @Override
     public boolean isEmpty() {
         return properties.isEmpty();
-    }
-
-    @Override
-    public PropertySource subset(String prefix) {
-        // TODO:
-        return null;
     }
 }

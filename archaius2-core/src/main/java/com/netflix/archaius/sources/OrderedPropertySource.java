@@ -129,34 +129,6 @@ public class OrderedPropertySource extends DelegatingPropertySource {
         
         source.addListener(listener -> notifyListeners());
     }
-    
-    @Override
-    public PropertySource subset(String prefix) {
-        PropertySource subset = delegate().subset(prefix);
-        return new DelegatingPropertySource() {
-            
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public PropertySource subset(String childPrefix) {
-                return subset(prefix + "." + childPrefix);
-            }
-
-            @Override
-            public Cancellation addListener(Listener listener) {
-                listeners.add(listener);
-                return () -> listeners.remove(listener);
-            }
-
-            @Override
-            protected PropertySource delegate() {
-                return subset;
-            }
-        };
-    }
 
     @Override
     public Cancellation addListener(Listener listener) {

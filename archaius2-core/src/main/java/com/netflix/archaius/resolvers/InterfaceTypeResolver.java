@@ -10,11 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import com.netflix.archaius.api.Context;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.api.ValueResolver;
+import com.netflix.archaius.api.TypeResolver;
 import com.netflix.archaius.api.annotations.PropertyName;
 
-public class InterfacePropertyResolver implements ValueResolver {
+public class InterfaceTypeResolver implements TypeResolver {
     public static interface PropertyNameResolver {
         String resolve(Method method);
     }
@@ -51,11 +52,11 @@ public class InterfacePropertyResolver implements ValueResolver {
     private final PropertyNameResolver nameResolver = DEFAULT_NAME_RESOLVER;
     
     @Override
-    public <T> Optional<T> resolve(PropertySource source, String key, Type type, ValueResolver resolver) {
-        return resolve(source, key, (Class<?>)type, resolver);
+    public <T> Optional<T> resolve(Context context, PropertySource source, String key, Type type) {
+        return resolve(context, source, key, (Class<?>)type);
     }
     
-    private <T> Optional<T> resolve(PropertySource source, String key, Class<?> cls, ValueResolver resolver) {
+    private <T> Optional<T> resolve(Context context, PropertySource source, String key, Class<?> cls) {
         // Hack so that default interface methods may be called from a proxy
         final MethodHandles.Lookup temp;
         try {
@@ -70,8 +71,7 @@ public class InterfacePropertyResolver implements ValueResolver {
         // Resolve value for every field
         final Map<Method, Optional<Object>> values = new HashMap<>();
         for (Method method : cls.getMethods()) {
-            Optional<Object> value = resolver.resolve(source, key + "." + nameResolver.resolve(method), method.getGenericReturnType(), resolver);
-            values.put(method, value);
+            values.put(method, context.resolve(source, key + "." + nameResolver.resolve(method), method.getGenericReturnType()));
         }
         
         final InvocationHandler handler = (proxy, method, args) -> {

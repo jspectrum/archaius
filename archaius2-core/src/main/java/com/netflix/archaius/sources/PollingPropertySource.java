@@ -52,11 +52,6 @@ public class PollingPropertySource extends DelegatingPropertySource {
     }
 
     @Override
-    public PropertySource subset(String prefix) {
-        return delegate().subset(prefix);
-    }
-    
-    @Override
     protected PropertySource delegate() {
         return delegate;
     }

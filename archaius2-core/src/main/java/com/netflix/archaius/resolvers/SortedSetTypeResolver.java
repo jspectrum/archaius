@@ -6,10 +6,10 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.api.ValueResolver;
+import com.netflix.archaius.api.TypeResolver;
 
-public class SortedSetPropertyResolver extends SetPropertyResolver {
-    SortedSetPropertyResolver() {
+public class SortedSetTypeResolver extends SetTypeResolver {
+    SortedSetTypeResolver() {
         super(TreeSet::new);
     }
 }

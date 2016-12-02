@@ -33,5 +33,4 @@ public class ProxyTest {
         System.out.println(foo);
         
     }
-    
 }

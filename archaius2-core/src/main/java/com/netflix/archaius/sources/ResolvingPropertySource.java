@@ -5,23 +5,22 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import com.netflix.archaius.api.PropertyResolver;
+import com.netflix.archaius.api.Context;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.api.ValueResolver;
-import com.netflix.archaius.resolvers.PropertyResolverBuilder;
+import com.netflix.archaius.resolvers.ContextImpl;
 
-public class ResolvingPropertySource extends DelegatingPropertySource implements PropertyResolver {
+public class ResolvingPropertySource extends DelegatingPropertySource {
 
-    private final ValueResolver resolver;
+    private final Context context;
     private final PropertySource delegate;
     
     public ResolvingPropertySource(PropertySource delegate) {
-        this(delegate, new PropertyResolverBuilder().build());
+        this(delegate, new ContextImpl());
     }
     
-    public ResolvingPropertySource(PropertySource delegate, ValueResolver resolver) {
+    public ResolvingPropertySource(PropertySource delegate, Context context) {
         this.delegate = new InterpolatingPropertySource(delegate);
-        this.resolver = resolver;
+        this.context = context;
     }
     
     public Optional<Long> getLong(String key) {
@@ -64,20 +63,14 @@ public class ResolvingPropertySource extends DelegatingPropertySource implements
         return get(key, Byte.class);
     }
 
-    @Override
     public <T> Optional<T> get(String key, Type type) {
-        return resolver.resolve(this, key, type, resolver);
+        return context.resolve(this, key, type);
     }
     
-    @Override
-    public PropertySource subset(String prefix) {
-        return new ResolvingPropertySource(delegate().subset(prefix)) {
-            public PropertySource subset(String childPrefix) {
-                return new ResolvingPropertySource(delegate().subset(prefix + "." + childPrefix)); 
-            }
-        };
+    public <T> Optional<T> get(String key, Class<T> type) {
+        return context.resolve(this, key, type);
     }
-
+    
     @Override
     protected PropertySource delegate() {
         return delegate;

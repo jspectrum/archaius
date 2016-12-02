@@ -6,9 +6,6 @@ import org.junit.Test;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.config.PropertySourceConfig;
-import com.netflix.archaius.sources.InterpolatingPropertySource;
-import com.netflix.archaius.sources.ImmutablePropertySource;
-import com.netflix.archaius.sources.ResolvingPropertySource;
 
 public class SourcesTest {
     @Test
@@ -54,15 +51,5 @@ public class SourcesTest {
         ResolvingPropertySource resolvingSource = new ResolvingPropertySource(source);
         resolvingSource.forEach((key, value) -> System.out.println("1:" + key + "=" + value));
         System.out.println(resolvingSource.getPropertyNames());
-
-        PropertySource child1 = resolvingSource.subset("b");
-        child1.forEach((key, value) -> System.out.println("2:" + key + "=" + value));
-        System.out.println(child1.getPropertyNames());
-
-        PropertySource child2 = child1.subset("c");
-        child2.forEach((key, value) -> System.out.println("3:" + key + "=" + value));
-        System.out.println(child2.getPropertyNames());
-        
-        child2.getProperty("d").ifPresent(value -> System.out.println("Value : " + value));
     }
 }

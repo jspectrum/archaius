@@ -30,15 +30,6 @@ public class InterpolatingPropertySource extends DelegatingPropertySource {
     }
 
     @Override
-    public PropertySource subset(String prefix) {
-        return new InterpolatingPropertySource(delegate().subset(prefix)) {
-            public PropertySource subset(String childPrefix) {
-                return new InterpolatingPropertySource(delegate().subset(prefix + "." + childPrefix)); 
-            }
-        };
-    }
-
-    @Override
     protected PropertySource delegate() {
         return delegate;
     }

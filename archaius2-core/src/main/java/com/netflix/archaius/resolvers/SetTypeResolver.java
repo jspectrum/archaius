@@ -9,23 +9,23 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.netflix.archaius.api.Context;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.api.ValueResolver;
-import com.netflix.archaius.sources.SinglePropertySource;
+import com.netflix.archaius.api.TypeResolver;
 
-public class SetPropertyResolver implements ValueResolver {
+public class SetTypeResolver implements TypeResolver {
     private Supplier<Set> supplier;
 
-    public SetPropertyResolver() {
+    public SetTypeResolver() {
         this(HashSet::new);
     }
     
-    public SetPropertyResolver(Supplier<Set> supplier) {
+    public SetTypeResolver(Supplier<Set> supplier) {
         this.supplier = supplier;
     }
 
     @Override
-    public <T> Optional<T> resolve(PropertySource source, String key, Type type, ValueResolver resolver) {
+    public <T> Optional<T> resolve(Context context, PropertySource source, String key, Type type) {
         ParameterizedType pType = (ParameterizedType)type;
         Type valueType = pType.getActualTypeArguments()[0];
         return (Optional<T>) source
@@ -35,11 +35,7 @@ public class SetPropertyResolver implements ValueResolver {
                     return Arrays
                         .asList(((String)value).split(","))
                         .stream()
-                        .map(v -> resolver.resolve(
-                                new SinglePropertySource("", v),
-                                "", 
-                                valueType, 
-                                resolver).get())
+                        .map(v -> (T)context.resolve(v, valueType))
                         .collect(Collectors.toCollection(supplier));
                 }
                 throw new IllegalArgumentException(key + " expected to be string");
