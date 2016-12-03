@@ -19,14 +19,14 @@ public class MapTypeCreator implements TypeCreator<Map<?, ?>> {
     }
 
     @Override
-    public void accept(String key, Object value) {
+    public void accept(String key, Supplier<Object> value) {
         int index = key.indexOf(".");
         accept(index == -1 ? key : key.substring(0, index-1),
                index == -1 ? ""  : key.substring(index+1),
                value);
     }
     
-    public void accept(String key, String remainder, Object value) {
+    public void accept(String key, String remainder, Supplier<Object> value) {
         if (data == null) {
             data = mapSupplier.get();
         }

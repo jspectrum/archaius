@@ -7,6 +7,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.internal.Preconditions;
@@ -100,8 +101,8 @@ public class ImmutablePropertySource implements PropertySource {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
-        properties.forEach(consumer);
+    public void forEach(BiConsumer<String, Supplier<Object>> consumer) {
+        properties.forEach((k, v) -> consumer.accept(k, () -> v));
     }
 
     @Override
@@ -115,13 +116,13 @@ public class ImmutablePropertySource implements PropertySource {
     }
 
     @Override
-    public void forEach(String prefix, BiConsumer<String, Object> consumer) {
+    public void forEach(String prefix, BiConsumer<String, Supplier<Object>> consumer) {
         if (!prefix.endsWith(".")) {
             forEach(prefix + ".", consumer);
         } else {
             properties
                 .subMap(prefix, prefix + Character.MAX_VALUE)
-                .forEach((key, value) -> consumer.accept(key.substring(prefix.length()), value));
+                .forEach((k, v) -> consumer.accept(k.substring(prefix.length()), () -> v));
         }
     }
 }

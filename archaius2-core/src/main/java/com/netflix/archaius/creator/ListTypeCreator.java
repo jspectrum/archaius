@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.TypeCreator;
@@ -19,16 +20,16 @@ public class ListTypeCreator implements TypeCreator<List<?>> {
     }
 
     @Override
-    public void accept(String key, Object value) {
+    public void accept(String key, Supplier<Object> value) {
         int index = key.indexOf(".");
         accept(index == -1 ? key : key.substring(0, index-1),
                index == -1 ? key : key.substring(0, index-1),
                value);
     }
     
-    private void accept(String key, String remainder, Object value) {
+    private void accept(String key, String remainder, Supplier<Object> value) {
         data = Arrays
-                .asList(((String)value).split(","))
+                .asList(((String)value.get()).split(","))
                 .stream()
                 .map(converter::apply)
                 .collect(Collectors.toList());

@@ -22,18 +22,19 @@ public class ProxyTest {
     public void test() {
         ResolvingPropertySource source = new ResolvingPropertySource(
             ImmutablePropertySource.builder()
+                .put("value", "30")
                 .put("foo.string",  "a1")
                 .put("foo.integer", "2")
                 .put("foo.list", "a,b,c")
 //                .put("foo.map", "a=1,b=2,c=3")
                 .put("foo.map.a1", "1")
                 .put("foo.map.a2", "2")
-                .put("foo.map.a3", "3")
+                .put("foo.map.a3", "${value}")
                 .build());
         
         CreatorFactory factory = new CreatorFactoryBuilder().build();
         
-        source.forEach("foo", (k, v) -> System.out.println(k + " = " + v));
+        source.forEach("foo", (k, v) -> System.out.println(k + " = " + v.get()));
         
         Foo foo = source.collect("foo", new ProxyTypeCreator<Foo>(factory, Foo.class, Foo.class.getAnnotations()));
         System.out.println(foo);

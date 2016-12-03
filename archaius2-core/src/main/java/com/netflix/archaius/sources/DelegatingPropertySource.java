@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.PropertySource;
@@ -21,12 +22,12 @@ public abstract class DelegatingPropertySource implements PropertySource {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEach(BiConsumer<String, Supplier<Object>> consumer) {
         delegate().forEach(consumer);
     }
 
     @Override
-    public void forEach(String prefix, BiConsumer<String, Object> consumer) {
+    public void forEach(String prefix, BiConsumer<String, Supplier<Object>> consumer) {
         delegate().forEach(prefix, consumer);
     }
 

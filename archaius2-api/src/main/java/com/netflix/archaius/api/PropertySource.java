@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Raw source for properties identified by a string name.  Values may be any object
@@ -26,22 +27,35 @@ public interface PropertySource {
      * Iterate through all properties of the PropertySource and their values.  
      * @param consumer
      */
-    void forEach(BiConsumer<String, Object> consumer);
+    void forEach(BiConsumer<String, Supplier<Object>> consumer);
     
     /**
      * Iterate through all properties starting with the specified prefix.  Note
-     * that property names passed to the consumer include the prefix.
+     * that property names passed to the consumer do not include the prefix.
      * 
      * @param prefix
      * @param consumer
      */
-    void forEach(String prefix, BiConsumer<String, Object> consumer);
-    
+    void forEach(String prefix, BiConsumer<String, Supplier<Object>> consumer);
+
+    /**
+     * Apply all properties to a TypeCreator and call it's get() method to create
+     * and immutable object
+     * @param creator
+     * @return
+     */
     default <T> T collect(TypeCreator<T> creator) {
         forEach(creator);
         return creator.get();
     }
     
+    /**
+     * Apply all properties prefixed with 'prefix' to a TypeCreator and call it's get() 
+     * method to create and immutable object.  Note that all properties passed to the
+     * creator will not have the prefix.
+     * @param creator
+     * @return
+     */
     default <T> T collect(String prefix, TypeCreator<T> creator) {
         forEach(prefix, creator);
         return creator.get();

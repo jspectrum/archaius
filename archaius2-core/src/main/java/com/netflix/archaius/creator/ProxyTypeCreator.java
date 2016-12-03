@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.CreatorFactory;
@@ -57,7 +58,7 @@ public class ProxyTypeCreator<T> implements TypeCreator<T> {
         }
 
         @Override
-        public void accept(String t, Object u) {
+        public void accept(String t, Supplier<Object> u) {
             creator.accept(t, u);
         }
 
@@ -83,14 +84,14 @@ public class ProxyTypeCreator<T> implements TypeCreator<T> {
     }
     
     @Override
-    public void accept(String key, Object value) {
+    public void accept(String key, Supplier<Object> value) {
         int index = key.indexOf(".");
         apply(index == -1 ? key : key.substring(0, index), 
               index == -1 ? "" : key.substring(index+1),
               value);
     }
 
-    private void apply(String name, String remainder, Object value) {
+    private void apply(String name, String remainder, Supplier<Object> value) {
         MethodTypeCreator method = methods.get(name);
         if (method == null) {
             // TODO: Log an error/warning?

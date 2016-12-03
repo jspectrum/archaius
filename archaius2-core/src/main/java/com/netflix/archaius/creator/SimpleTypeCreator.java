@@ -2,6 +2,7 @@ package com.netflix.archaius.creator;
 
 import java.lang.annotation.Annotation;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.netflix.archaius.api.TypeCreator;
 import com.netflix.archaius.internal.Preconditions;
@@ -15,10 +16,11 @@ public class SimpleTypeCreator implements TypeCreator<Object> {
     }
 
     @Override
-    public void accept(String key, Object value) {
-        Preconditions.checkArgument(value != null, "Value cannot be null");
+    public void accept(String key, Supplier<Object> supplier) {
+        Preconditions.checkArgument(supplier != null, "Value cannot be null");
         Preconditions.checkArgument(key.isEmpty(), "Illegal property suffix : " + key);
 
+        Object value = supplier.get();
         if (value.getClass() == String.class) {
             data = converter.apply((String)value);
             return;

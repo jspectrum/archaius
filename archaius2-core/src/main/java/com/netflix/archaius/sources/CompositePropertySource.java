@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.netflix.archaius.api.PropertySource;
 
@@ -19,7 +20,7 @@ public class CompositePropertySource extends ImmutablePropertySource {
     private static Map<String, Object> joinSources(Collection<PropertySource> sources) {
         Map<String, Object> values = new HashMap<>();
         sources.forEach(source -> source.forEach((name, value) -> {
-            values.putIfAbsent(name, value);
+            values.computeIfAbsent(name, n -> value.get());
         }));
         return values;
     }
