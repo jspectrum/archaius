@@ -20,7 +20,7 @@ public class EmptyPropertySource implements PropertySource {
     
     @Override
     public String getName() {
-        return null;
+        return "empty";
     }
 
     @Override

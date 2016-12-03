@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.OrderedKey;
@@ -90,16 +93,17 @@ public class OrderedPropertySource extends DelegatingPropertySource {
         private final PropertySource source;
         
         State(List<Element> entries) {
-            ImmutablePropertySource.Builder builder = ImmutablePropertySource.builder();
+            SortedMap<String, Supplier<Object>> map = new TreeMap<>();
+            
             this.elements = entries;
             this.elements
                 .stream()
                 .map(Element::getPropertySource)
                 .forEach(
-                    source -> source.forEach((k, v) -> builder.putIfAbsent(k, v))
+                    source -> source.forEach((k, v) -> map.putIfAbsent(k, v))
                 );
             
-            source = builder.build();
+            source = new ImmutablePropertySource(name, map);
         }
         
         State withEntries(List<Element> entries) {

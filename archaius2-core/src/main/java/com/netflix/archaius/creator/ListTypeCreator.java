@@ -8,9 +8,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.netflix.archaius.api.TypeCreator;
+import com.netflix.archaius.api.Collector;
 
-public class ListTypeCreator implements TypeCreator<List<?>> {
+public class ListTypeCreator implements Collector<List<?>> {
 
     private final Function<String, ?> converter;
     private List<?> data;
@@ -20,19 +20,21 @@ public class ListTypeCreator implements TypeCreator<List<?>> {
     }
 
     @Override
-    public void accept(String key, Supplier<Object> value) {
+    public void accept(String key, Supplier<Object> supplier) {
         int index = key.indexOf(".");
         accept(index == -1 ? key : key.substring(0, index-1),
-               index == -1 ? key : key.substring(0, index-1),
-               value);
+               index == -1 ? "" : key.substring(index + 1),
+               supplier);
     }
     
     private void accept(String key, String remainder, Supplier<Object> value) {
-        data = Arrays
-                .asList(((String)value.get()).split(","))
-                .stream()
-                .map(converter::apply)
-                .collect(Collectors.toList());
+        if (remainder.isEmpty()) {
+            data = Arrays
+                    .asList(((String)value.get()).split(","))
+                    .stream()
+                    .map(converter::apply)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override

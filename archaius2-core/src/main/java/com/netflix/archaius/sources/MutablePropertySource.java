@@ -15,7 +15,7 @@ import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.PropertySource;
 
 public class MutablePropertySource implements PropertySource {
-    private volatile SortedMap<String, Object> properties;
+    private volatile SortedMap<String, Supplier<Object>> properties;
     private final String name;
     private final CopyOnWriteArrayList<Consumer<PropertySource>> listeners = new CopyOnWriteArrayList<>();
 
@@ -29,14 +29,14 @@ public class MutablePropertySource implements PropertySource {
         return name;
     }
 
-    private void internalSetProperties(SortedMap<String, Object> newProperties) {
+    private void internalSetProperties(SortedMap<String, Supplier<Object>> newProperties) {
         this.properties = Collections.unmodifiableSortedMap(newProperties);
         notifyListeners();
     }
     
     public synchronized Object setProperty(String key, Object value) {
-        SortedMap<String, Object> newProperties = new TreeMap<>(properties);
-        Object oldValue = newProperties.put(key, value);
+        SortedMap<String, Supplier<Object>> newProperties = new TreeMap<>(properties);
+        Object oldValue = newProperties.put(key, () -> value);
         
         if (oldValue == null || !oldValue.equals(value)) {
             internalSetProperties(newProperties);
@@ -45,8 +45,8 @@ public class MutablePropertySource implements PropertySource {
     }
     
     public synchronized void setProperties(Map<String, Object> values) {
-        SortedMap<String, Object> newProperties = new TreeMap<>(properties);
-        newProperties.putAll(values);
+        SortedMap<String, Supplier<Object>> newProperties = new TreeMap<>(properties);
+        values.forEach((k, v) -> newProperties.put(k, () -> v));
         internalSetProperties(newProperties);
     }
     
@@ -55,12 +55,9 @@ public class MutablePropertySource implements PropertySource {
             return null;
         }
         
-        SortedMap<String, Object> newProperties = new TreeMap<>(properties);
+        SortedMap<String, Supplier<Object>> newProperties = new TreeMap<>(properties);
         Object oldValue = newProperties.remove(key);
-        
-        if (oldValue != null) {
-            internalSetProperties(newProperties);
-        }
+        internalSetProperties(newProperties);
         return oldValue;
     }
 
@@ -72,12 +69,12 @@ public class MutablePropertySource implements PropertySource {
 
     @Override
     public Optional<Object> getProperty(String name) {
-        return Optional.ofNullable(properties.get(name));
+        return Optional.ofNullable(properties.get(name)).map(sv -> sv.get());
     }
 
     @Override
     public void forEach(BiConsumer<String, Supplier<Object>> consumer) {
-        properties.forEach((k, v) -> consumer.accept(k, () -> v));
+        properties.forEach(consumer);
     }
 
     @Override
@@ -87,7 +84,7 @@ public class MutablePropertySource implements PropertySource {
         } else {
             properties
                 .subMap(prefix, prefix + Character.MAX_VALUE)
-                .forEach((key, value) -> consumer.accept(key.substring(prefix.length()), () -> value));
+                .forEach((k, sv) -> consumer.accept(k.substring(prefix.length()), sv));
         }
     }
     

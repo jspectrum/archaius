@@ -30,8 +30,8 @@ import org.slf4j.LoggerFactory;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.MapConfig;
 
 public class PropertiesConfigReader implements ConfigReader {
     private static final Logger LOG = LoggerFactory.getLogger(PropertiesConfigReader.class);

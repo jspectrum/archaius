@@ -4,23 +4,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 
 import com.netflix.archaius.api.PropertySource;
 
 /**
- * Immutable property source that is a composite of multiple PropertySource's.
+ * Immutable property source that is a composite of multiple {@link PropertySource}s.
  */
 public class CompositePropertySource extends ImmutablePropertySource {
     private final List<PropertySource> sources;
     
-    private static Map<String, Object> joinSources(Collection<PropertySource> sources) {
-        Map<String, Object> values = new HashMap<>();
+    private static SortedMap<String, Supplier<Object>> joinSources(Collection<PropertySource> sources) {
+        SortedMap<String, Supplier<Object>> values = new TreeMap<>();
         sources.forEach(source -> source.forEach((name, value) -> {
-            values.computeIfAbsent(name, n -> value.get());
+            values.putIfAbsent(name, value);
         }));
         return values;
     }

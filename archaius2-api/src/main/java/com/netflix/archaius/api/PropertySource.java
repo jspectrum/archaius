@@ -41,24 +41,24 @@ public interface PropertySource {
     /**
      * Apply all properties to a TypeCreator and call it's get() method to create
      * and immutable object
-     * @param creator
+     * @param collector
      * @return
      */
-    default <T> T collect(TypeCreator<T> creator) {
-        forEach(creator);
-        return creator.get();
+    default <T> T collect(Collector<T> collector) {
+        forEach(collector);
+        return collector.get();
     }
     
     /**
      * Apply all properties prefixed with 'prefix' to a TypeCreator and call it's get() 
      * method to create and immutable object.  Note that all properties passed to the
      * creator will not have the prefix.
-     * @param creator
+     * @param collector
      * @return
      */
-    default <T> T collect(String prefix, TypeCreator<T> creator) {
-        forEach(prefix, creator);
-        return creator.get();
+    default <T> T collect(String prefix, Collector<T> collector) {
+        forEach(prefix, collector);
+        return collector.get();
     }
     
     /**

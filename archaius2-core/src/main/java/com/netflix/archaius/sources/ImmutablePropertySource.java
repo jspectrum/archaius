@@ -16,7 +16,7 @@ import com.netflix.archaius.internal.Preconditions;
  * Immutable PropertySource with a builder for conveniently creating a property source
  */
 public class ImmutablePropertySource implements PropertySource {
-    protected SortedMap<String, Object> properties;
+    protected SortedMap<String, Supplier<Object>> properties;
     protected String name;
     
     private static final AtomicInteger counter = new AtomicInteger();
@@ -26,7 +26,7 @@ public class ImmutablePropertySource implements PropertySource {
      * 
      * {@code
      * <pre>
-     * MapConfig.builder()
+     * ImmutablePropertySource.builder()
      *      .put("foo", "bar")
      *      .put("baz", 123)
      *      .build()
@@ -34,7 +34,7 @@ public class ImmutablePropertySource implements PropertySource {
      * }
      */
     public static class Builder {
-        ImmutablePropertySource source = new ImmutablePropertySource();
+        ImmutablePropertySource source = new ImmutablePropertySource("", new TreeMap<>());
         
         public Builder named(String name) {
             Preconditions.checkArgument(source != null, "Builder already created");
@@ -44,22 +44,22 @@ public class ImmutablePropertySource implements PropertySource {
         
         public <T> Builder put(String key, T value) {
             Preconditions.checkArgument(source != null, "Builder already created");
-            source.properties.put(key, value.toString());
-            return this;
-        }
-        
-        public <T> Builder putAll(Map<String, Object> values) {
-            Preconditions.checkArgument(source != null, "Builder already created");
-            source.properties.putAll(values);
+            source.properties.put(key, () -> value);
             return this;
         }
         
         public <T> Builder putIfAbsent(String key, T value) {
             Preconditions.checkArgument(source != null, "Builder already created");
-            source.properties.putIfAbsent(key, value);
+            source.properties.putIfAbsent(key, () -> value);
             return null;
         }
 
+        public Builder putAll(Map<String, ?> values) {
+            Preconditions.checkArgument(source != null, "Builder already created");
+            values.forEach((k, v) -> source.properties.put(k, () -> v));
+            return this;
+        }
+        
         public ImmutablePropertySource build() {
             try {
                 if (source.name == null) {
@@ -76,18 +76,9 @@ public class ImmutablePropertySource implements PropertySource {
         return new Builder();
     }
     
-    private ImmutablePropertySource() {
-        this(null, new TreeMap<>());
-    }
-    
-    protected ImmutablePropertySource(String name, SortedMap<String, Object> values) {
+    public ImmutablePropertySource(String name, SortedMap<String, Supplier<Object>> values) {
         this.name = name;
         this.properties = values;
-    }
-    
-    protected ImmutablePropertySource(String name, Map<String, Object> values) {
-        this.name = name;
-        this.properties = new TreeMap<>(values);
     }
     
     @Override
@@ -102,7 +93,7 @@ public class ImmutablePropertySource implements PropertySource {
 
     @Override
     public void forEach(BiConsumer<String, Supplier<Object>> consumer) {
-        properties.forEach((k, v) -> consumer.accept(k, () -> v));
+        properties.forEach(consumer);
     }
 
     @Override
@@ -122,7 +113,7 @@ public class ImmutablePropertySource implements PropertySource {
         } else {
             properties
                 .subMap(prefix, prefix + Character.MAX_VALUE)
-                .forEach((k, v) -> consumer.accept(k.substring(prefix.length()), () -> v));
+                .forEach((k, sv) -> consumer.accept(k.substring(prefix.length()), sv));
         }
     }
 }
