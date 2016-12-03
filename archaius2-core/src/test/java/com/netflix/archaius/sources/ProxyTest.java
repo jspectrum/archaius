@@ -6,15 +6,25 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.netflix.archaius.api.CreatorFactory;
+import com.netflix.archaius.api.annotations.DefaultValue;
+import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.creator.CreatorFactoryBuilder;
 import com.netflix.archaius.creator.ProxyTypeCreator;
 
 public class ProxyTest {
     public static interface Foo {
         String getString();
+        
         Integer getInteger();
+
+        @DefaultValue("50")
+        Integer getDefaultInteger();
+        
         default Boolean getBoolean() { return false; }
-        List<String> getList();
+        
+        @PropertyName(name = "list")
+        List<String> getListAbc();
+        
         Map<String, Integer> getMap();
     }
     

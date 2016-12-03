@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.CreatorFactory;
 import com.netflix.archaius.api.TypeCreator;
+import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 
 public class ProxyTypeCreator<T> implements TypeCreator<T> {
@@ -55,6 +56,11 @@ public class ProxyTypeCreator<T> implements TypeCreator<T> {
         MethodTypeCreator(Method method, TypeCreator<?> creator) {
             this.method = method;
             this.creator = creator;
+            
+            DefaultValue defaultValue = method.getAnnotation(DefaultValue.class);
+            if (defaultValue != null) {
+                this.creator.accept("", defaultValue::value);
+            }
         }
 
         @Override
@@ -75,7 +81,7 @@ public class ProxyTypeCreator<T> implements TypeCreator<T> {
     public ProxyTypeCreator(CreatorFactory factory, Class<T> type, Annotation[] annotations) {
         this.type = type;
         
-        // FIXME: This code can result in an infinate loop for nested proxies
+        // FIXME: This code can result in an infinite loop for nested proxies
         this.methods = Arrays.asList(type.getMethods())
             .stream()
             .collect(Collectors.toMap(
