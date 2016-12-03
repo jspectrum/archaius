@@ -78,6 +78,6 @@ public interface PropertySource {
      * mechanism simply informs the listener that something had changed.
      * @param listener
      */
-    default Cancellation addListener(Consumer<PropertySource> listener) { return Cancellation.empty(); }
+    default Runnable addListener(Consumer<PropertySource> listener) { return () -> {}; }
 
 }

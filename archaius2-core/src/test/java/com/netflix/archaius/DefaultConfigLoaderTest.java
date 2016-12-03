@@ -1,5 +1,17 @@
 package com.netflix.archaius;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.StrInterpolator;
@@ -9,14 +21,6 @@ import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.DefaultCompositeConfig;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.readers.PropertiesConfigReader;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Nikos Michalakis <nikos@netflix.com>

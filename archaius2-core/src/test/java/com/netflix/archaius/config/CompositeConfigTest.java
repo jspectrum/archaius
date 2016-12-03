@@ -23,8 +23,8 @@ import org.junit.Test;
 
 import com.google.common.collect.Sets;
 import com.netflix.archaius.DefaultConfigLoader;
-import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
 
 public class CompositeConfigTest {

@@ -3,8 +3,8 @@ package com.netflix.archaius.config;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.api.Config;
 import com.netflix.archaius.DefaultConfigLoader;
+import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.exceptions.ConfigException;
 
 public class ConfigLoaderTest {

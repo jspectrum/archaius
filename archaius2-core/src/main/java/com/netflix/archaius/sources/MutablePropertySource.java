@@ -6,18 +6,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.PropertySource;
+import com.netflix.archaius.internal.GarbageCollectingSet;
 
 public class MutablePropertySource implements PropertySource {
     private volatile SortedMap<String, Supplier<Object>> properties;
     private final String name;
-    private final CopyOnWriteArrayList<Consumer<PropertySource>> listeners = new CopyOnWriteArrayList<>();
+    private final GarbageCollectingSet<Consumer<PropertySource>> listeners = new GarbageCollectingSet<>();
 
     public MutablePropertySource(String name) {
         this.properties = Collections.emptySortedMap();
@@ -94,9 +93,8 @@ public class MutablePropertySource implements PropertySource {
     }
 
     @Override
-    public Cancellation addListener(Consumer<PropertySource> consumer) {
-        listeners.add(consumer);
-        return () -> listeners.remove(consumer);
+    public Runnable addListener(Consumer<PropertySource> consumer) {
+        return listeners.add(consumer, this);
     }
     
     protected void notifyListeners() {

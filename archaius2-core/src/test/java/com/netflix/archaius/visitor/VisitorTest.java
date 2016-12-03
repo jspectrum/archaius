@@ -4,13 +4,13 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import com.netflix.archaius.config.DefaultCompositeConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.netflix.archaius.api.config.CompositeConfig;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.DefaultCompositeConfig;
+import com.netflix.archaius.config.MapConfig;
 
 public class VisitorTest {
     @Test

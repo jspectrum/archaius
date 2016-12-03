@@ -26,8 +26,8 @@ import org.junit.Test;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.interpolate.ConfigStrLookup;
 import com.netflix.archaius.readers.PropertiesConfigReader;
