@@ -3,16 +3,13 @@ package com.netflix.archaius.api;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Raw source for properties identified by a string name.  Values may be any object
  * including strings and primitives.
  */
 public interface PropertySource {
-    interface Listener {
-        void onChanged(PropertySource propertySource);
-    }
-    
     /**
      * @return Name of the property source.  This could be an arbitrary name or a file name from whence the
      * configuration was loaded
@@ -31,6 +28,13 @@ public interface PropertySource {
      */
     void forEach(BiConsumer<String, Object> consumer);
     
+    /**
+     * Iterate through all properties starting with the specified prefix.  Note
+     * that property names passed to the consumer include the prefix.
+     * 
+     * @param prefix
+     * @param consumer
+     */
     void forEach(String prefix, BiConsumer<String, Object> consumer);
     
     /**
@@ -50,6 +54,6 @@ public interface PropertySource {
      * mechanism simply informs the listener that something had changed.
      * @param listener
      */
-    default Cancellation addListener(Listener listener) { return Cancellation.empty(); }
+    default Cancellation addListener(Consumer<PropertySource> listener) { return Cancellation.empty(); }
 
 }

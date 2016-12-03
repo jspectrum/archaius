@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.OrderedKey;
@@ -111,7 +112,7 @@ public class OrderedPropertySource extends DelegatingPropertySource {
     }
     
     private final String name;
-    private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Consumer<PropertySource>> listeners = new CopyOnWriteArrayList<>();
     private final AtomicReference<State> state = new AtomicReference<>(new State(Collections.emptyList()));
     
     @Override
@@ -131,13 +132,13 @@ public class OrderedPropertySource extends DelegatingPropertySource {
     }
 
     @Override
-    public Cancellation addListener(Listener listener) {
-        listeners.add(listener);
-        return () -> listeners.remove(listener);
+    public Cancellation addListener(Consumer<PropertySource> consumer) {
+        listeners.add(consumer);
+        return () -> listeners.remove(consumer);
     }
     
     protected void notifyListeners() {
-        listeners.forEach(listener -> listener.onChanged(this));
+        listeners.forEach(listener -> listener.accept(this));
     }
 
     @Override

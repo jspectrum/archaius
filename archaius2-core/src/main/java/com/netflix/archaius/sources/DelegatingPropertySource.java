@@ -3,6 +3,7 @@ package com.netflix.archaius.sources;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.PropertySource;
@@ -40,8 +41,8 @@ public abstract class DelegatingPropertySource implements PropertySource {
     }
 
     @Override
-    public Cancellation addListener(Listener listener) {
-        return delegate().addListener(listener);
+    public Cancellation addListener(Consumer<PropertySource> consumer) {
+        return delegate().addListener(consumer);
     }
 
     protected abstract PropertySource delegate();

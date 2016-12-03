@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.netflix.archaius.api.Cancellation;
 import com.netflix.archaius.api.PropertySource;
@@ -45,7 +46,7 @@ public class EmptyPropertySource implements PropertySource {
     }
 
     @Override
-    public Cancellation addListener(Listener listener) {
+    public Cancellation addListener(Consumer<PropertySource> consumer) {
         return () -> {};
     }
 }

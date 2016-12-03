@@ -11,7 +11,7 @@ import com.netflix.archaius.api.PropertySource;
  */
 public class PollingPropertySource extends DelegatingPropertySource {
     private final Cancellation cancellation;
-    private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Consumer<PropertySource>> listeners = new CopyOnWriteArrayList<>();
     private volatile PropertySource delegate;
     
     /**
@@ -42,13 +42,13 @@ public class PollingPropertySource extends DelegatingPropertySource {
     }
 
     @Override
-    public Cancellation addListener(Listener listener) {
+    public Cancellation addListener(Consumer<PropertySource> listener) {
         listeners.add(listener);
         return () -> listeners.remove(listener);
     }
 
     protected void notifyListeners() {
-        listeners.forEach(listener -> listener.onChanged(this));
+        listeners.forEach(listener -> listener.accept(this));
     }
 
     @Override
