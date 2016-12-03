@@ -37,6 +37,16 @@ public interface PropertySource {
      */
     void forEach(String prefix, BiConsumer<String, Object> consumer);
     
+    default <T> T collect(TypeCreator<T> creator) {
+        forEach(creator);
+        return creator.get();
+    }
+    
+    default <T> T collect(String prefix, TypeCreator<T> creator) {
+        forEach(prefix, creator);
+        return creator.get();
+    }
+    
     /**
      * @return Immutable collection of all property names.  For dynamic PropertySources it's still possible
      * for a property name in this collection to no longer exist when getProperty is called.

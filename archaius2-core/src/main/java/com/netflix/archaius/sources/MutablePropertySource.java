@@ -84,10 +84,12 @@ public class MutablePropertySource implements PropertySource {
         if (!prefix.endsWith(".")) {
             forEach(prefix + ".", consumer);
         } else {
-            properties.subMap(prefix, prefix + Character.MAX_VALUE).forEach(consumer);
+            properties
+                .subMap(prefix, prefix + Character.MAX_VALUE)
+                .forEach((key, value) -> consumer.accept(key.substring(prefix.length()), value));
         }
     }
-
+    
     @Override
     public Collection<String> getPropertyNames() {
         return properties.keySet();

@@ -50,7 +50,7 @@ public class PollingPropertySource extends DelegatingPropertySource {
     protected void notifyListeners() {
         listeners.forEach(listener -> listener.accept(this));
     }
-
+    
     @Override
     protected PropertySource delegate() {
         return delegate;
