@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
@@ -17,17 +16,17 @@ public abstract class DelegatingPropertySource implements PropertySource {
     }
 
     @Override
-    public Stream<Map.Entry<String, Supplier<Object>>> stream() {
+    public Stream<Map.Entry<String, Object>> stream() {
         return delegate().stream();
     }
     
     @Override
-    public Stream<Map.Entry<String, Supplier<Object>>> stream(String prefix) {
+    public Stream<Map.Entry<String, Object>> stream(String prefix) {
         return delegate().stream(prefix);
     }
     
     @Override
-    public Optional<Object> getProperty(String name) {
+    public Optional<?> getProperty(String name) {
         return delegate().getProperty(name);
     }
 

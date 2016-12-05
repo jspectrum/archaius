@@ -11,7 +11,7 @@ public class SystemPropertySource extends ImmutablePropertySource {
                 .stream()
                 .collect(Collectors.toMap(
                     entry -> entry.getKey().toString(), 
-                    entry -> () -> entry.getValue(),
+                    entry -> entry.getValue(),
                     (u, v) -> u, 
                     TreeMap::new
                     )));

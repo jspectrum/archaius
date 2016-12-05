@@ -9,7 +9,6 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import com.netflix.archaius.api.OrderedKey;
 import com.netflix.archaius.api.PropertySource;
@@ -92,7 +91,7 @@ public class OrderedPropertySource extends DelegatingPropertySource {
         private final PropertySource source;
         
         State(List<Element> entries) {
-            SortedMap<String, Supplier<Object>> map = new TreeMap<>();
+            SortedMap<String, Object> map = new TreeMap<>();
             
             this.elements = entries;
             this.elements.stream()

@@ -4,21 +4,20 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TreeSet;
 
+import com.netflix.archaius.Configuration;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.sources.ResolvingPropertySource;
 
 /**
  */
 public class PropertySourceConfig implements Config {
 
-    private final ResolvingPropertySource source;
+    private final Configuration source;
     
-    public PropertySourceConfig(ResolvingPropertySource source) {
+    public PropertySourceConfig(Configuration source) {
         this.source = source;
     }
     
@@ -177,12 +176,14 @@ public class PropertySourceConfig implements Config {
 
     @Override
     public Iterator<String> getKeys() {
-        return source.getPropertyNames().iterator();
+//        return source.getPropertyNames().iterator();
+        return null;
     }
 
     @Override
     public Iterator<String> getKeys(String prefix) {
-        return new TreeSet<>(source.getPropertyNames()).subSet(prefix, prefix + "/uffff").iterator();
+//        return new TreeSet<>(source.getPropertyNames()).subSet(prefix, prefix + "/uffff").iterator();
+        return null;
     }
 
     @Override

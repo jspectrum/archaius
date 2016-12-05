@@ -17,8 +17,8 @@ import com.netflix.archaius.api.PropertySource;
 public class CompositePropertySource extends ImmutablePropertySource {
     private final List<PropertySource> sources;
     
-    private static SortedMap<String, Supplier<Object>> joinSources(Collection<PropertySource> sources) {
-        SortedMap<String, Supplier<Object>> values = new TreeMap<>();
+    private static SortedMap<String, Object> joinSources(Collection<PropertySource> sources) {
+        SortedMap<String, Object> values = new TreeMap<>();
         sources.forEach(source -> source.stream().forEach(entry -> {
             values.putIfAbsent(entry.getKey(), entry.getValue());
         }));

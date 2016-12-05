@@ -4,8 +4,8 @@ import java.lang.reflect.Array;
 
 import org.junit.Test;
 
+import com.netflix.archaius.Configuration;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.config.PropertySourceConfig;
 
 public class SourcesTest {
     @Test
@@ -25,9 +25,7 @@ public class SourcesTest {
                 .put("e", "${c}")
                 .build();
         
-        ResolvingPropertySource resolvingSource = new ResolvingPropertySource(new InterpolatingPropertySource(source));
-        
-        PropertySourceConfig config = new PropertySourceConfig(resolvingSource);
+        Configuration config = new Configuration(source);
         
 //        System.out.println(config.getString("e"));
 //        System.out.println(config.getDouble("a"));
@@ -35,7 +33,7 @@ public class SourcesTest {
 //        Integer[] ar = resolvingSource.get(Integer[].class, "d").get();
 //        System.out.println(Arrays.asList(resolvingSource.get(Integer[].class, "d").get()));
 //        int[] ar2 = resolvingSource.get(int[].class, "d").get();
-        boolean[] b = (boolean[]) resolvingSource.get("bool", boolean[].class).get();
+        boolean[] b = (boolean[]) config.get("bool", boolean[].class).get();
     }
     
     @Test
@@ -48,9 +46,8 @@ public class SourcesTest {
             .put("e",   "a5")
             .build();
         
-        ResolvingPropertySource resolvingSource = new ResolvingPropertySource(source);
+        Configuration config = new Configuration(source);
         
-        resolvingSource.stream().forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
-        System.out.println(resolvingSource.getPropertyNames());
+        config.stream().forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
     }
 }

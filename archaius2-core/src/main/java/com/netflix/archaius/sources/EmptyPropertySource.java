@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
@@ -44,12 +43,12 @@ public class EmptyPropertySource implements PropertySource {
     }
 
     @Override
-    public Stream<Entry<String, Supplier<Object>>> stream() {
+    public Stream<Entry<String, Object>> stream() {
         return Stream.empty();
     }
 
     @Override
-    public Stream<Entry<String, Supplier<Object>>> stream(String prefix) {
+    public Stream<Entry<String, Object>> stream(String prefix) {
         return Stream.empty();
     }
 }

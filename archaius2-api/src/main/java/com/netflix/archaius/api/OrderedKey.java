@@ -6,7 +6,7 @@ package com.netflix.archaius.api;
  * over higher orders.  Within a layer configurations are prioritized by
  * insertion order (or reversed if 'reversed=true')
  */
-public class OrderedKey {
+public final class OrderedKey {
     private final String name;
     private final int order;
     

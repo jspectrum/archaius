@@ -6,7 +6,9 @@ import java.util.stream.Collector;
 
 import org.junit.Test;
 
+import com.netflix.archaius.Configuration;
 import com.netflix.archaius.api.CreatorFactory;
+import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.creator.CreatorFactoryBuilder;
@@ -31,8 +33,7 @@ public class ProxyTest {
     
     @Test
     public void test() {
-        ResolvingPropertySource source = new ResolvingPropertySource(
-            ImmutablePropertySource.builder()
+        PropertySource source = ImmutablePropertySource.builder()
                 .put("value", "30")
                 .put("foo.string",  "a1")
                 .put("foo.integer", "2")
@@ -41,13 +42,17 @@ public class ProxyTest {
                 .put("foo.map.a1", "1")
                 .put("foo.map.a2", "2")
                 .put("foo.map.a3", "${value}")
-                .build());
+                .build();
         
         CreatorFactory factory = new CreatorFactoryBuilder().build();
         
-        source.stream("foo").forEach(t -> System.out.println(t.getKey() + " = " + t.getValue().get()));
+        source.stream("foo").forEach(t -> System.out.println(t.getKey() + " = " + t.getValue()));
+
+        Configuration config = new Configuration(source);
         
-        Foo foo = source.stream("foo").collect(Collector.of(
+        config.stream().forEach(t -> System.out.println("Config: " + t.getKey() + " = " + t.getValue().get()));
+        
+        Foo foo = config.stream("foo").collect(Collector.of(
                 () -> new ProxyTypeCreator<Foo>(factory, Foo.class, Foo.class.getAnnotations()),
                 (creator, entry) -> creator.accept(entry.getKey(), entry.getValue()),
                 (c1, c2) -> c1, 

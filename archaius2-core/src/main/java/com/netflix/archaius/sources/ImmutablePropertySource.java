@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
@@ -17,7 +16,7 @@ import com.netflix.archaius.internal.Preconditions;
  * Immutable PropertySource with a builder for conveniently creating a property source
  */
 public class ImmutablePropertySource implements PropertySource {
-    protected SortedMap<String, Supplier<Object>> properties;
+    protected SortedMap<String, Object> properties;
     protected String name;
     
     private static final AtomicInteger counter = new AtomicInteger();
@@ -45,19 +44,19 @@ public class ImmutablePropertySource implements PropertySource {
         
         public <T> Builder put(String key, T value) {
             Preconditions.checkArgument(source != null, "Builder already created");
-            source.properties.put(key, () -> value);
+            source.properties.put(key, value);
             return this;
         }
         
         public <T> Builder putIfAbsent(String key, T value) {
             Preconditions.checkArgument(source != null, "Builder already created");
-            source.properties.putIfAbsent(key, () -> value);
+            source.properties.putIfAbsent(key, value);
             return null;
         }
 
         public Builder putAll(Map<String, ?> values) {
             Preconditions.checkArgument(source != null, "Builder already created");
-            values.forEach((k, v) -> source.properties.put(k, () -> v));
+            values.forEach((k, v) -> source.properties.put(k, v));
             return this;
         }
         
@@ -77,7 +76,7 @@ public class ImmutablePropertySource implements PropertySource {
         return new Builder();
     }
     
-    public ImmutablePropertySource(String name, SortedMap<String, Supplier<Object>> values) {
+    public ImmutablePropertySource(String name, SortedMap<String, Object> values) {
         this.name = name;
         this.properties = values;
     }
@@ -89,7 +88,7 @@ public class ImmutablePropertySource implements PropertySource {
 
     @Override
     public Optional<Object> getProperty(String name) {
-        return Optional.ofNullable(properties.get(name)).map(Supplier::get);
+        return Optional.ofNullable(properties.get(name));
     }
 
     @Override
@@ -103,12 +102,12 @@ public class ImmutablePropertySource implements PropertySource {
     }
 
     @Override
-    public Stream<Entry<String, Supplier<Object>>> stream() {
+    public Stream<Entry<String, Object>> stream() {
         return properties.entrySet().stream();
     }
 
     @Override
-    public Stream<Entry<String, Supplier<Object>>> stream(String prefix) {
+    public Stream<Entry<String, Object>> stream(String prefix) {
         if (!prefix.endsWith(".")) {
             return stream(prefix + ".");
         } else {

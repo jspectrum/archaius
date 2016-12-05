@@ -8,14 +8,13 @@ import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.internal.GarbageCollectingSet;
 
 public class MutablePropertySource implements PropertySource {
-    private volatile SortedMap<String, Supplier<Object>> properties;
+    private volatile SortedMap<String, Object> properties;
     private final String name;
     private final GarbageCollectingSet<Consumer<PropertySource>> listeners = new GarbageCollectingSet<>();
 
@@ -29,14 +28,14 @@ public class MutablePropertySource implements PropertySource {
         return name;
     }
 
-    private void internalSetProperties(SortedMap<String, Supplier<Object>> newProperties) {
+    private void internalSetProperties(SortedMap<String, Object> newProperties) {
         this.properties = Collections.unmodifiableSortedMap(newProperties);
         notifyListeners();
     }
     
     public synchronized Object setProperty(String key, Object value) {
-        SortedMap<String, Supplier<Object>> newProperties = new TreeMap<>(properties);
-        Object oldValue = newProperties.put(key, () -> value);
+        SortedMap<String, Object> newProperties = new TreeMap<>(properties);
+        Object oldValue = newProperties.put(key, value);
         
         if (oldValue == null || !oldValue.equals(value)) {
             internalSetProperties(newProperties);
@@ -45,8 +44,8 @@ public class MutablePropertySource implements PropertySource {
     }
     
     public synchronized void setProperties(Map<String, Object> values) {
-        SortedMap<String, Supplier<Object>> newProperties = new TreeMap<>(properties);
-        values.forEach((k, v) -> newProperties.put(k, () -> v));
+        SortedMap<String, Object> newProperties = new TreeMap<>(properties);
+        values.forEach((k, v) -> newProperties.put(k, v));
         internalSetProperties(newProperties);
     }
     
@@ -55,7 +54,7 @@ public class MutablePropertySource implements PropertySource {
             return null;
         }
         
-        SortedMap<String, Supplier<Object>> newProperties = new TreeMap<>(properties);
+        SortedMap<String, Object> newProperties = new TreeMap<>(properties);
         Object oldValue = newProperties.remove(key);
         internalSetProperties(newProperties);
         return oldValue;
@@ -69,16 +68,16 @@ public class MutablePropertySource implements PropertySource {
 
     @Override
     public Optional<Object> getProperty(String name) {
-        return Optional.ofNullable(properties.get(name)).map(Supplier::get);
+        return Optional.ofNullable(properties.get(name));
     }
 
     @Override
-    public Stream<Entry<String, Supplier<Object>>> stream() {
+    public Stream<Entry<String, Object>> stream() {
         return properties.entrySet().stream();
     }
 
     @Override
-    public Stream<Entry<String, Supplier<Object>>> stream(String prefix) {
+    public Stream<Entry<String, Object>> stream(String prefix) {
         if (!prefix.endsWith(".")) {
             return stream(prefix + ".");
         } else {

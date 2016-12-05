@@ -22,10 +22,10 @@ public class OrderedPropertySourceTest {
         
         
         source.stream()
-            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
+            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue()));
         
         source.stream("foo")
-            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
+            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue()));
     }
     
     @Test
