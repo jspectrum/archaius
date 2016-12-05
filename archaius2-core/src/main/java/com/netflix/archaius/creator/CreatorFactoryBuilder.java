@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.netflix.archaius.api.CreatorFactory;
-import com.netflix.archaius.api.Collector;
+import com.netflix.archaius.api.Creator;
 import com.netflix.archaius.resolvers.StringConverterRegistry;
 
 public class CreatorFactoryBuilder {
@@ -25,7 +25,7 @@ public class CreatorFactoryBuilder {
         
         return new CreatorFactory() {
             @Override
-            public Collector<?> create(Type type, Annotation[] annotations) {
+            public Creator<?> create(Type type, Annotation[] annotations) {
                 Function<String, ?> converter = registry.getConverter(type);
                 if (converter != null) {
                     return new SimpleTypeCreator(converter, annotations);

@@ -8,9 +8,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.netflix.archaius.api.Collector;
+import com.netflix.archaius.api.Creator;
 
-public class ListTypeCreator implements Collector<List<?>> {
+public class ListTypeCreator implements Creator<List<?>> {
 
     private final Function<String, ?> converter;
     private List<?> data;

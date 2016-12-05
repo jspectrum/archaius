@@ -2,6 +2,7 @@ package com.netflix.archaius.sources;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
 
 import org.junit.Test;
 
@@ -44,9 +45,14 @@ public class ProxyTest {
         
         CreatorFactory factory = new CreatorFactoryBuilder().build();
         
-        source.forEach("foo", (k, v) -> System.out.println(k + " = " + v.get()));
+        source.stream("foo").forEach(t -> System.out.println(t.getKey() + " = " + t.getValue().get()));
         
-        Foo foo = source.collect("foo", new ProxyTypeCreator<Foo>(factory, Foo.class, Foo.class.getAnnotations()));
+        Foo foo = source.stream("foo").collect(Collector.of(
+                () -> new ProxyTypeCreator<Foo>(factory, Foo.class, Foo.class.getAnnotations()),
+                (creator, entry) -> creator.accept(entry.getKey(), entry.getValue()),
+                (c1, c2) -> c1, 
+                ProxyTypeCreator::get));
+
         System.out.println(foo);
     }
 }

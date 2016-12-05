@@ -4,10 +4,10 @@ import java.lang.annotation.Annotation;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.netflix.archaius.api.Collector;
+import com.netflix.archaius.api.Creator;
 import com.netflix.archaius.internal.Preconditions;
 
-public class SimpleTypeCreator implements Collector<Object> {
+public class SimpleTypeCreator implements Creator<Object> {
     private final Function<String, ?> converter;
     private Object data;
     

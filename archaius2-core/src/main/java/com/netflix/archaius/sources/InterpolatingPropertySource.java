@@ -1,9 +1,10 @@
 package com.netflix.archaius.sources;
 
+import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.StrInterpolator;
@@ -27,14 +28,20 @@ public class InterpolatingPropertySource extends DelegatingPropertySource {
     }
 
     @Override
-    public void forEach(BiConsumer<String, Supplier<Object>> consumer) {
-        delegate().forEach((k, sv) -> consumer.accept(k, () -> interpolator.apply(sv.get())));
+    public Stream<Entry<String, Supplier<Object>>> stream() {
+        return delegate().stream().map(PropertySourceUtils.interpolate(interpolator));
     }
 
     @Override
-    public void forEach(String prefix, BiConsumer<String, Supplier<Object>> consumer) {
-        delegate().forEach(prefix, (k, sv) -> consumer.accept(k, () -> interpolator.apply(sv.get())));
+    public Stream<Entry<String, Supplier<Object>>> stream(String prefix) {
+        if (!prefix.endsWith(".")) {
+            return stream(prefix + ".");
+        } else {
+            return delegate().stream(prefix)
+                .map(PropertySourceUtils.interpolate(interpolator));
+        }
     }
+
 
     @Override
     public Optional<Object> getProperty(String name) {

@@ -95,11 +95,11 @@ public class OrderedPropertySource extends DelegatingPropertySource {
             SortedMap<String, Supplier<Object>> map = new TreeMap<>();
             
             this.elements = entries;
-            this.elements
-                .stream()
+            this.elements.stream()
                 .map(Element::getPropertySource)
                 .forEach(
-                    source -> source.forEach((k, v) -> map.putIfAbsent(k, v))
+                    source -> source.stream()
+                        .forEach(entry -> map.putIfAbsent(entry.getKey(), entry.getValue()))
                 );
             
             source = new ImmutablePropertySource(name, map);

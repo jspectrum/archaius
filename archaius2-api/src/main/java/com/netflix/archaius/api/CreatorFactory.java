@@ -4,5 +4,5 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 public interface CreatorFactory {
-    Collector<?> create(Type type, Annotation[] annotations);
+    Creator<?> create(Type type, Annotation[] annotations);
 }

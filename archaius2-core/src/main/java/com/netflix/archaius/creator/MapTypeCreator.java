@@ -5,15 +5,15 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.netflix.archaius.api.Collector;
+import com.netflix.archaius.api.Creator;
 
-public class MapTypeCreator implements Collector<Map<?, ?>> {
+public class MapTypeCreator implements Creator<Map<?, ?>> {
 
-    private final Supplier<Map<String, Collector<?>>> mapSupplier;
-    private final Supplier<Collector<?>> elementSupplier;
-    private Map<String, Collector<?>> data;
+    private final Supplier<Map<String, Creator<?>>> mapSupplier;
+    private final Supplier<Creator<?>> elementSupplier;
+    private Map<String, Creator<?>> data;
 
-    public MapTypeCreator(Supplier<Map<String, Collector<?>>> mapSupplier, Supplier<Collector<?>> elementSupplier) {
+    public MapTypeCreator(Supplier<Map<String, Creator<?>>> mapSupplier, Supplier<Creator<?>> elementSupplier) {
         this.mapSupplier = mapSupplier;
         this.elementSupplier = elementSupplier;
     }

@@ -2,12 +2,13 @@ package com.netflix.archaius.sources;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.internal.Preconditions;
@@ -88,12 +89,7 @@ public class ImmutablePropertySource implements PropertySource {
 
     @Override
     public Optional<Object> getProperty(String name) {
-        return Optional.ofNullable(properties.get(name));
-    }
-
-    @Override
-    public void forEach(BiConsumer<String, Supplier<Object>> consumer) {
-        properties.forEach(consumer);
+        return Optional.ofNullable(properties.get(name)).map(Supplier::get);
     }
 
     @Override
@@ -107,13 +103,20 @@ public class ImmutablePropertySource implements PropertySource {
     }
 
     @Override
-    public void forEach(String prefix, BiConsumer<String, Supplier<Object>> consumer) {
+    public Stream<Entry<String, Supplier<Object>>> stream() {
+        return properties.entrySet().stream();
+    }
+
+    @Override
+    public Stream<Entry<String, Supplier<Object>>> stream(String prefix) {
         if (!prefix.endsWith(".")) {
-            forEach(prefix + ".", consumer);
+            return stream(prefix + ".");
         } else {
-            properties
+            return properties
                 .subMap(prefix, prefix + Character.MAX_VALUE)
-                .forEach((k, sv) -> consumer.accept(k.substring(prefix.length()), sv));
+                .entrySet()
+                .stream()
+                .map(PropertySourceUtils.stripPrefix(prefix));
         }
     }
 }

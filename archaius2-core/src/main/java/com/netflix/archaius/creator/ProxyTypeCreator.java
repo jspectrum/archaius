@@ -13,12 +13,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.netflix.archaius.api.Creator;
 import com.netflix.archaius.api.CreatorFactory;
-import com.netflix.archaius.api.Collector;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 
-public class ProxyTypeCreator<T> implements Collector<T> {
+public class ProxyTypeCreator<T> implements Creator<T> {
     
     private static Function<Method, String> DEFAULT_NAME_RESOLVER = method -> {
         final PropertyName nameAnnot = method.getAnnotation(PropertyName.class); 
@@ -49,11 +49,11 @@ public class ProxyTypeCreator<T> implements Collector<T> {
         return new String(c);
     }
 
-    static class MethodTypeCreator implements Collector<Object> {
+    static class MethodTypeCreator implements Creator<Object> {
         private final Method method;
-        private final Collector<?> creator;
+        private final Creator<?> creator;
 
-        MethodTypeCreator(Method method, Collector<?> creator) {
+        MethodTypeCreator(Method method, Creator<?> creator) {
             this.method = method;
             this.creator = creator;
             

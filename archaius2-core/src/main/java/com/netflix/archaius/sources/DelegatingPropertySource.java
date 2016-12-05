@@ -1,10 +1,11 @@
 package com.netflix.archaius.sources;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 
@@ -16,18 +17,18 @@ public abstract class DelegatingPropertySource implements PropertySource {
     }
 
     @Override
+    public Stream<Map.Entry<String, Supplier<Object>>> stream() {
+        return delegate().stream();
+    }
+    
+    @Override
+    public Stream<Map.Entry<String, Supplier<Object>>> stream(String prefix) {
+        return delegate().stream(prefix);
+    }
+    
+    @Override
     public Optional<Object> getProperty(String name) {
         return delegate().getProperty(name);
-    }
-
-    @Override
-    public void forEach(BiConsumer<String, Supplier<Object>> consumer) {
-        delegate().forEach(consumer);
-    }
-
-    @Override
-    public void forEach(String prefix, BiConsumer<String, Supplier<Object>> consumer) {
-        delegate().forEach(prefix, consumer);
     }
 
     @Override

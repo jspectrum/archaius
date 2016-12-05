@@ -49,7 +49,8 @@ public class SourcesTest {
             .build();
         
         ResolvingPropertySource resolvingSource = new ResolvingPropertySource(source);
-        resolvingSource.forEach((key, value) -> System.out.println("1:" + key + "=" + value));
+        
+        resolvingSource.stream().forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
         System.out.println(resolvingSource.getPropertyNames());
     }
 }

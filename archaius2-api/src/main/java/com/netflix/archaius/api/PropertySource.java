@@ -1,10 +1,12 @@
 package com.netflix.archaius.api;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Raw source for properties identified by a string name.  Values may be any object
@@ -23,11 +25,17 @@ public interface PropertySource {
      */
     Optional<Object> getProperty(String key);
     
+    Stream<Map.Entry<String, Supplier<Object>>> stream();
+    
+    Stream<Map.Entry<String, Supplier<Object>>> stream(String prefix);
+    
     /**
      * Iterate through all properties of the PropertySource and their values.  
      * @param consumer
      */
-    void forEach(BiConsumer<String, Supplier<Object>> consumer);
+    default void forEach(BiConsumer<String, Object> consumer) {
+        stream().forEach(entry -> consumer.accept(entry.getKey(), entry.getValue().get()));
+    }
     
     /**
      * Iterate through all properties starting with the specified prefix.  Note
@@ -36,31 +44,10 @@ public interface PropertySource {
      * @param prefix
      * @param consumer
      */
-    void forEach(String prefix, BiConsumer<String, Supplier<Object>> consumer);
+    default void forEach(String prefix, BiConsumer<String, Object> consumer) {
+        stream(prefix).forEach(entry -> consumer.accept(entry.getKey(), entry.getValue().get()));
+    }
 
-    /**
-     * Apply all properties to a TypeCreator and call it's get() method to create
-     * and immutable object
-     * @param collector
-     * @return
-     */
-    default <T> T collect(Collector<T> collector) {
-        forEach(collector);
-        return collector.get();
-    }
-    
-    /**
-     * Apply all properties prefixed with 'prefix' to a TypeCreator and call it's get() 
-     * method to create and immutable object.  Note that all properties passed to the
-     * creator will not have the prefix.
-     * @param collector
-     * @return
-     */
-    default <T> T collect(String prefix, Collector<T> collector) {
-        forEach(prefix, collector);
-        return collector.get();
-    }
-    
     /**
      * @return Immutable collection of all property names.  For dynamic PropertySources it's still possible
      * for a property name in this collection to no longer exist when getProperty is called.
@@ -79,5 +66,4 @@ public interface PropertySource {
      * @param listener
      */
     default Runnable addListener(Consumer<PropertySource> listener) { return () -> {}; }
-
 }

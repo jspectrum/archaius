@@ -2,7 +2,6 @@ package com.netflix.archaius.sources;
 
 import org.junit.Test;
 
-import com.netflix.archaius.BiConsumers;
 import com.netflix.archaius.api.OrderedKey;
 
 public class OrderedPropertySourceTest {
@@ -21,9 +20,12 @@ public class OrderedPropertySourceTest {
                 .put("foo.bar", "override")
                 .build());
         
-        source.forEach(BiConsumers.print(System.out));
         
-        source.forEach("foo", BiConsumers.print(System.out));
+        source.stream()
+            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
+        
+        source.stream("foo")
+            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
     }
     
     @Test
@@ -39,10 +41,5 @@ public class OrderedPropertySourceTest {
         
         source.addListener((s) -> System.out.println("Update"));
         mutable.setProperty("foo.bar", "update");
-    }
-    
-    @Test
-    public void testPerfix() {
-        
     }
 }
