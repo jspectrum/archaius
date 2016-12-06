@@ -13,10 +13,28 @@ import com.netflix.archaius.api.Configuration;
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
-import com.netflix.archaius.sources.PropertySourceUtils;
 
 public class PropertySourceBasedConfiguration implements Configuration {
 
+    static Function<Entry<String, Object>, Entry<String, Supplier<Object>>> interpolate(Function<Object, Object> interpolator) {
+        return entry -> new Entry<String, Supplier<Object>>() {
+            @Override
+            public String getKey() { 
+                return entry.getKey(); 
+            }
+       
+            @Override
+            public Supplier<Object> getValue() { 
+                return () -> interpolator.apply(entry.getValue()); 
+            }
+
+            @Override
+            public Supplier<Object> setValue(Supplier<Object> value) {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+    
     private final StringConverterRegistry registry;
     private final Function<Object, Object> interpolator;
     private final PropertySource propertySource;
@@ -37,7 +55,7 @@ public class PropertySourceBasedConfiguration implements Configuration {
 
     @Override
     public Stream<Entry<String, Supplier<Object>>> stream() {
-        return propertySource.stream().map(PropertySourceUtils.interpolate(interpolator));
+        return propertySource.stream().map(interpolate(interpolator));
     }
 
     @Override
@@ -46,7 +64,7 @@ public class PropertySourceBasedConfiguration implements Configuration {
             return stream(prefix + ".");
         } else {
             return propertySource.stream(prefix)
-                .map(PropertySourceUtils.interpolate(interpolator));
+                .map(interpolate(interpolator));
         }
     }
 
