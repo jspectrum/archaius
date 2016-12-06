@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import com.netflix.archaius.api.OrderedKey;
 import com.netflix.archaius.api.PropertySource;
@@ -16,6 +17,44 @@ import com.netflix.archaius.internal.GarbageCollectingSet;
 
 public class OrderedPropertySource extends DelegatingPropertySource {
 
+    public OrderedPropertySource(String name) {
+        this.name = name;
+    }
+    
+    private final String name;
+    private final GarbageCollectingSet<Consumer<PropertySource>> listeners = new GarbageCollectingSet<>();
+    private final AtomicReference<State> state = new AtomicReference<>(new State(Collections.emptyList()));
+    
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    public void addPropertySource(OrderedKey layer, PropertySource source) {
+        state.getAndUpdate(current -> {
+            List<Element> newEntries = new ArrayList<>(current.elements);
+            newEntries.add(Element.create(layer, source));
+            newEntries.sort(ByLayerAndInsertionOrder);
+            return current.withEntries(Collections.unmodifiableList(newEntries));
+        });
+        
+        source.addListener(listener -> notifyListeners());
+    }
+
+    @Override
+    public Runnable addListener(Consumer<PropertySource> consumer) {
+        return listeners.add(consumer, this);
+    }
+    
+    private void notifyListeners() {
+        listeners.forEach(listener -> listener.accept(this));
+    }
+
+    @Override
+    protected PropertySource delegate() {
+        return state.get().source;
+    }
+    
     private static class Element {
         private final OrderedKey layer;
         private final int insertionOrder;
@@ -94,11 +133,10 @@ public class OrderedPropertySource extends DelegatingPropertySource {
             SortedMap<String, Object> map = new TreeMap<>();
             
             this.elements = entries;
-            this.elements.stream()
-                .map(Element::getPropertySource)
-                .forEach(
-                    source -> source.stream()
-                        .forEach(entry -> map.putIfAbsent(entry.getKey(), entry.getValue()))
+            this.elements
+                .stream()
+                .flatMap(element -> element.value.stream())
+                .forEach(entry -> map.putIfAbsent(entry.getKey(), entry.getValue())
                 );
             
             source = new ImmutablePropertySource(name, map);
@@ -109,41 +147,8 @@ public class OrderedPropertySource extends DelegatingPropertySource {
         }
     }
 
-    public OrderedPropertySource(String name) {
-        this.name = name;
-    }
-    
-    private final String name;
-    private final GarbageCollectingSet<Consumer<PropertySource>> listeners = new GarbageCollectingSet<>();
-    private final AtomicReference<State> state = new AtomicReference<>(new State(Collections.emptyList()));
-    
     @Override
-    public String getName() {
-        return this.name;
-    }
-
-    public void addPropertySource(OrderedKey layer, PropertySource source) {
-        state.getAndUpdate(current -> {
-            List<Element> newEntries = new ArrayList<>(current.elements);
-            newEntries.add(Element.create(layer, source));
-            newEntries.sort(ByLayerAndInsertionOrder);
-            return current.withEntries(Collections.unmodifiableList(newEntries));
-        });
-        
-        source.addListener(listener -> notifyListeners());
-    }
-
-    @Override
-    public Runnable addListener(Consumer<PropertySource> consumer) {
-        return listeners.add(consumer, this);
-    }
-    
-    protected void notifyListeners() {
-        listeners.forEach(listener -> listener.accept(this));
-    }
-
-    @Override
-    protected PropertySource delegate() {
-        return state.get().source;
+    public Stream<PropertySource> children() {
+        return state.get().elements.stream().map(element -> element.value);
     }
 }

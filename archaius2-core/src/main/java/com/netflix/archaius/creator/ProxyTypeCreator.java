@@ -127,43 +127,34 @@ public class ProxyTypeCreator<T> implements Creator<T> {
             }
         });
         
-        final InvocationHandler handler = (proxy, method, args) -> {
-            Object value = values.get(method);
-            if (value != null) {
-                return value;
-            }
-            
-            if (method.isDefault()) {
-                return temp.unreflectSpecial(method, type)
-                        .bindTo(proxy)
-                        .invokeWithArguments(args);
-            }
-            
-            if ("toString".equals(method.getName())) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(type.getSimpleName()).append("[");
-                values.forEach((m, v) -> {
-                    sb.append(nameResolver.apply(m)).append("='");
-                    try {
-                        if (v != null) {
-                            sb.append(v);
-                        } else if (m.isDefault()) {
-                            sb.append(temp.unreflectSpecial(m, type)
-                                    .bindTo(proxy)
-                                    .invokeWithArguments(args));
-                        } else {
-                            sb.append("null");
+        final InvocationHandler handler = new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                Object value = values.get(method);
+                if (value != null) {
+                    return value;
+                } else if (method.isDefault()) {
+                    return temp.unreflectSpecial(method, type)
+                            .bindTo(proxy)
+                            .invokeWithArguments(args);
+                } else if ("toString".equals(method.getName())) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(type.getSimpleName()).append("[");
+                    values.forEach((m, v) -> {
+                        sb.append(nameResolver.apply(m)).append("='");
+                        try {
+                            sb.append(invoke(proxy, m, args));
+                        } catch (Throwable e1) {
+                            sb.append(e1.getMessage());
                         }
-                    } catch (Throwable e) {
-                        sb.append(e.getMessage());
-                    }
-                    sb.append("'");
-                    sb.append(", ");
-                });
-                sb.append("]");
-                return sb.toString();
-            } else {
-                throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
+                        sb.append("'");
+                        sb.append(", ");
+                    });
+                    sb.append("]");
+                    return sb.toString();
+                } else {
+                    throw new NoSuchMethodError(method.getName() + " not found on interface " + type.getName());
+                }
             }
         };
         return (T)Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);

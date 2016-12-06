@@ -6,7 +6,7 @@ import java.util.stream.Collector;
 
 import org.junit.Test;
 
-import com.netflix.archaius.Configuration;
+import com.netflix.archaius.PropertySourceBasedConfiguration;
 import com.netflix.archaius.api.CreatorFactory;
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.annotations.DefaultValue;
@@ -48,7 +48,7 @@ public class ProxyTest {
         
         source.stream("foo").forEach(t -> System.out.println(t.getKey() + " = " + t.getValue()));
 
-        Configuration config = new Configuration(source);
+        PropertySourceBasedConfiguration config = new PropertySourceBasedConfiguration(source);
         
         config.stream().forEach(t -> System.out.println("Config: " + t.getKey() + " = " + t.getValue().get()));
         

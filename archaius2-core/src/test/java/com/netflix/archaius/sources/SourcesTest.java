@@ -4,7 +4,7 @@ import java.lang.reflect.Array;
 
 import org.junit.Test;
 
-import com.netflix.archaius.Configuration;
+import com.netflix.archaius.PropertySourceBasedConfiguration;
 import com.netflix.archaius.api.PropertySource;
 
 public class SourcesTest {
@@ -25,7 +25,7 @@ public class SourcesTest {
                 .put("e", "${c}")
                 .build();
         
-        Configuration config = new Configuration(source);
+        PropertySourceBasedConfiguration config = new PropertySourceBasedConfiguration(source);
         
 //        System.out.println(config.getString("e"));
 //        System.out.println(config.getDouble("a"));
@@ -46,7 +46,7 @@ public class SourcesTest {
             .put("e",   "a5")
             .build();
         
-        Configuration config = new Configuration(source);
+        PropertySourceBasedConfiguration config = new PropertySourceBasedConfiguration(source);
         
         config.stream().forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
     }

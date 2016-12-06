@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 
@@ -34,7 +34,8 @@ public class CompositePropertySource extends ImmutablePropertySource {
         this.sources = Collections.unmodifiableList(new ArrayList<>(sources));
     }
     
-    public Collection<PropertySource> getSources() {
-        return sources;
+    @Override
+    public Stream<PropertySource> children() {
+        return sources.stream();
     }
 }

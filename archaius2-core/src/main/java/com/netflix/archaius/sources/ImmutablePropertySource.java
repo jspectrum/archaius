@@ -111,8 +111,7 @@ public class ImmutablePropertySource implements PropertySource {
         if (!prefix.endsWith(".")) {
             return stream(prefix + ".");
         } else {
-            return properties
-                .subMap(prefix, prefix + Character.MAX_VALUE)
+            return properties.subMap(prefix, prefix + Character.MAX_VALUE)
                 .entrySet()
                 .stream()
                 .map(PropertySourceUtils.stripPrefix(prefix));
