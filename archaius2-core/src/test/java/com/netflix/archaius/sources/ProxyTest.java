@@ -13,6 +13,7 @@ import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.creator.CreatorFactoryBuilder;
 import com.netflix.archaius.creator.ProxyTypeCreator;
+import com.netflix.archaius.sources.ImmutablePropertySource;
 
 public class ProxyTest {
     public static interface Foo {
@@ -46,11 +47,11 @@ public class ProxyTest {
         
         CreatorFactory factory = new CreatorFactoryBuilder().build();
         
-        source.stream("foo").forEach(t -> System.out.println(t.getKey() + " = " + t.getValue()));
+//        source.stream("foo").forEach(t -> System.out.println(t.getKey() + " = " + t.getValue()));
 
         PropertySourceBasedConfiguration config = new PropertySourceBasedConfiguration(source);
         
-        config.stream().forEach(t -> System.out.println("Config: " + t.getKey() + " = " + t.getValue().get()));
+//        config.stream().forEach(t -> System.out.println("Config: " + t.getKey() + " = " + t.getValue().get()));
         
         Foo foo = config.stream("foo").collect(Collector.of(
                 () -> new ProxyTypeCreator<Foo>(factory, Foo.class, Foo.class.getAnnotations()),

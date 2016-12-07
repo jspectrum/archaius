@@ -37,6 +37,18 @@ public class SourcesTest {
     }
     
     @Test
+    public void escape() {
+        PropertySource source = ImmutablePropertySource.builder()
+                .put("a",   "a1")
+                .put("b",   "${a}")
+                .put("c",   "$${a}")
+                .build();
+            
+        PropertySourceBasedConfiguration config = new PropertySourceBasedConfiguration(source);
+        System.out.println(config.getString("b"));
+        System.out.println(config.getString("c"));
+    }
+    @Test
     public void prefix() {
         PropertySource source = ImmutablePropertySource.builder()
             .put("a",   "a1")

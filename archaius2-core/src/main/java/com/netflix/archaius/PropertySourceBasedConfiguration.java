@@ -70,7 +70,7 @@ public class PropertySourceBasedConfiguration implements Configuration {
 
     @Override
     public Optional<Object> get(String key, Type type) {
-        return propertySource.getProperty(key).map(value -> {
+        return propertySource.getProperty(key).map(interpolator).map(value -> {
             if (value.getClass() == String.class) {
                 return registry.getConverter(type).apply((String)value);
             } else if (value.getClass() == type) {
@@ -138,7 +138,15 @@ public class PropertySourceBasedConfiguration implements Configuration {
     
     @Override
     public <T> Optional<T> get(String key, Class<T> type) {
-        return get(key, type);
+        return (Optional<T>) propertySource.getProperty(key).map(interpolator).map(value -> {
+            if (value.getClass() == String.class) {
+                return registry.getConverter(type).apply((String)value);
+            } else if (value.getClass() == type) {
+                return value;
+            } else {
+                throw new IllegalArgumentException("Expected String or " + value.getClass() + " but got " + type.getTypeName());
+            }
+        });
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,6 +58,11 @@ public class ImmutablePropertySource implements PropertySource {
         public Builder putAll(Map<String, ?> values) {
             Preconditions.checkArgument(source != null, "Builder already created");
             values.forEach((k, v) -> source.properties.put(k, v));
+            return this;
+        }
+        
+        public Builder putAll(Properties props) {
+            props.forEach((key, value) -> source.properties.put(key.toString(), value));
             return this;
         }
         
