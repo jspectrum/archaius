@@ -19,7 +19,7 @@ public class MapTypeCreator implements Creator<Map<?, ?>> {
     }
 
     @Override
-    public void accept(String key, Supplier<Object> value) {
+    public void onProperty(String key, Supplier<Object> value) {
         int index = key.indexOf(".");
         accept(index == -1 ? key : key.substring(0, index-1),
                index == -1 ? ""  : key.substring(index+1),
@@ -32,17 +32,17 @@ public class MapTypeCreator implements Creator<Map<?, ?>> {
         }
         
         data.computeIfAbsent(key, k -> elementSupplier.get())
-            .accept(remainder, value);
+            .onProperty(remainder, value);
     }
 
     @Override
-    public Map<?, ?> get() {
+    public Map<?, ?> create() {
         if (data == null) {
             return null;
         }
         return Collections.unmodifiableMap(data.entrySet().stream().collect(Collectors.toMap(
             entry -> entry.getKey(),
-            entry -> entry.getValue().get())));
+            entry -> entry.getValue().create())));
     }
 
 }

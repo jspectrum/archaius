@@ -16,7 +16,7 @@ public class SimpleTypeCreator implements Creator<Object> {
     }
 
     @Override
-    public void accept(String key, Supplier<Object> supplier) {
+    public void onProperty(String key, Supplier<Object> supplier) {
         Preconditions.checkArgument(supplier != null, "Value cannot be null");
         Preconditions.checkArgument(key.isEmpty(), "Illegal property suffix : " + key);
 
@@ -30,7 +30,7 @@ public class SimpleTypeCreator implements Creator<Object> {
     }
 
     @Override
-    public Object get() {
+    public Object create() {
         return data;
     }
 

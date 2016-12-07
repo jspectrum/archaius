@@ -2,18 +2,15 @@ package com.netflix.archaius.sources;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 
 import org.junit.Test;
 
 import com.netflix.archaius.PropertySourceBasedConfiguration;
-import com.netflix.archaius.api.CreatorFactory;
+import com.netflix.archaius.api.CreatorRegistry;
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
-import com.netflix.archaius.creator.CreatorFactoryBuilder;
-import com.netflix.archaius.creator.ProxyTypeCreator;
-import com.netflix.archaius.sources.ImmutablePropertySource;
+import com.netflix.archaius.creator.CreatorRegistryBuilder;
 
 public class ProxyTest {
     public static interface Foo {
@@ -45,19 +42,11 @@ public class ProxyTest {
                 .put("foo.map.a3", "${value}")
                 .build();
         
-        CreatorFactory factory = new CreatorFactoryBuilder().build();
+        CreatorRegistry registry = new CreatorRegistryBuilder().build();
         
-//        source.stream("foo").forEach(t -> System.out.println(t.getKey() + " = " + t.getValue()));
-
         PropertySourceBasedConfiguration config = new PropertySourceBasedConfiguration(source);
         
-//        config.stream().forEach(t -> System.out.println("Config: " + t.getKey() + " = " + t.getValue().get()));
-        
-        Foo foo = config.stream("foo").collect(Collector.of(
-                () -> new ProxyTypeCreator<Foo>(factory, Foo.class, Foo.class.getAnnotations()),
-                (creator, entry) -> creator.accept(entry.getKey(), entry.getValue()),
-                (c1, c2) -> c1, 
-                ProxyTypeCreator::get));
+        Foo foo = config.stream("foo").collect(registry.create(Foo.class).toCollector());
 
         System.out.println(foo);
     }

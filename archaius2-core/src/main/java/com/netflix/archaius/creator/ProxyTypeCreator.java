@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.Creator;
-import com.netflix.archaius.api.CreatorFactory;
+import com.netflix.archaius.api.CreatorRegistry;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 
@@ -59,18 +59,18 @@ public class ProxyTypeCreator<T> implements Creator<T> {
             
             DefaultValue defaultValue = method.getAnnotation(DefaultValue.class);
             if (defaultValue != null) {
-                this.creator.accept("", defaultValue::value);
+                this.creator.onProperty("", defaultValue::value);
             }
         }
 
         @Override
-        public void accept(String t, Supplier<Object> u) {
-            creator.accept(t, u);
+        public void onProperty(String t, Supplier<Object> u) {
+            creator.onProperty(t, u);
         }
 
         @Override
-        public Object get() {
-            return creator.get();
+        public Object create() {
+            return creator.create();
         }
     }
     
@@ -78,7 +78,7 @@ public class ProxyTypeCreator<T> implements Creator<T> {
     private final Map<String, MethodTypeCreator> methods;
     private final Class<T> type;
 
-    public ProxyTypeCreator(CreatorFactory factory, Class<T> type, Annotation[] annotations) {
+    public ProxyTypeCreator(CreatorRegistry factory, Class<T> type, Annotation[] annotations) {
         this.type = type;
         
         // FIXME: This code can result in an infinite loop for nested proxies
@@ -86,11 +86,11 @@ public class ProxyTypeCreator<T> implements Creator<T> {
             .stream()
             .collect(Collectors.toMap(
                 nameResolver, 
-                method -> new MethodTypeCreator(method, factory.create(method.getGenericReturnType(), method.getDeclaredAnnotations()))));
+                method -> new MethodTypeCreator(method, factory.get(method.getGenericReturnType(), method.getDeclaredAnnotations()))));
     }
     
     @Override
-    public void accept(String key, Supplier<Object> value) {
+    public void onProperty(String key, Supplier<Object> value) {
         int index = key.indexOf(".");
         apply(index == -1 ? key : key.substring(0, index), 
               index == -1 ? "" : key.substring(index+1),
@@ -103,11 +103,11 @@ public class ProxyTypeCreator<T> implements Creator<T> {
             // TODO: Log an error/warning?
             return;
         }
-        method.creator.accept(remainder, value);
+        method.creator.onProperty(remainder, value);
     }
     
     @Override
-    public T get() {
+    public T create() {
         // Hack so that default interface methods may be called from a proxy
         final MethodHandles.Lookup temp;
         try {
@@ -121,7 +121,7 @@ public class ProxyTypeCreator<T> implements Creator<T> {
 
         final Map<Method, Object> values = new HashMap<>();
         methods.forEach((key, creator) -> {
-            Object v = creator.get();
+            Object v = creator.create();
             if (v != null) {
                 values.put(creator.method, v);
             }

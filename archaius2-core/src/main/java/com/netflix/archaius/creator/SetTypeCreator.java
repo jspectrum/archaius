@@ -20,7 +20,7 @@ public class SetTypeCreator implements Creator<Set<?>> {
     }
 
     @Override
-    public void accept(String key, Supplier<Object> supplier) {
+    public void onProperty(String key, Supplier<Object> supplier) {
         int index = key.indexOf(".");
         accept(index == -1 ? key : key.substring(0, index-1),
                index == -1 ? "" : key.substring(index + 1),
@@ -38,7 +38,7 @@ public class SetTypeCreator implements Creator<Set<?>> {
     }
 
     @Override
-    public Set<?> get() {
+    public Set<?> create() {
         return Collections.unmodifiableSet(data);
     }
 

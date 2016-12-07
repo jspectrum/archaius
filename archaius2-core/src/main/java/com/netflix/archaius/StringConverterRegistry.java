@@ -151,7 +151,7 @@ public class StringConverterRegistry {
                     };
                 }
                 catch (NoSuchMethodException e) {
-                    throw new RuntimeException(cls.getCanonicalName() + " has no String constructor or valueOf static method");
+                    return null;
                 }
             }
         }

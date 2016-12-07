@@ -12,10 +12,10 @@ import java.util.function.Function;
 
 import com.netflix.archaius.StringConverterRegistry;
 import com.netflix.archaius.api.Creator;
-import com.netflix.archaius.api.CreatorFactory;
+import com.netflix.archaius.api.CreatorRegistry;
 import com.netflix.archaius.api.Matcher;
 
-public class CreatorFactoryBuilder {
+public class CreatorRegistryBuilder {
 
     private StringConverterRegistry registry;
     private List<MatchingCreator> custom = new ArrayList<>();
@@ -25,11 +25,11 @@ public class CreatorFactoryBuilder {
         Creator<?> get();
     }
     
-    public CreatorFactoryBuilder() {
+    public CreatorRegistryBuilder() {
         this.registry = StringConverterRegistry.newBuilder().build();
     }
     
-    CreatorFactoryBuilder register(Matcher matcher, Creator<?> creator) {
+    CreatorRegistryBuilder register(Matcher matcher, Creator<?> creator) {
         custom.add(new MatchingCreator() {
             @Override
             public boolean matches(Type type) {
@@ -44,10 +44,10 @@ public class CreatorFactoryBuilder {
         return this;
     }
     
-    public CreatorFactory build() {
-        return new CreatorFactory() {
+    public CreatorRegistry build() {
+        return new CreatorRegistry() {
             @Override
-            public Creator<?> create(Type type, Annotation[] annotations) {
+            public Creator<?> get(Type type, Annotation[] annotations) {
                 Function<String, ?> converter = registry.getConverter(type);
                 if (converter != null) {
                     return new SimpleTypeCreator(converter, annotations);
@@ -71,7 +71,7 @@ public class CreatorFactoryBuilder {
                 if (type instanceof ParameterizedType) {
                     ParameterizedType pType = (ParameterizedType) type;
                     if (pType.getRawType() == Map.class) {
-                        return new MapTypeCreator(LinkedHashMap::new, () -> create(pType.getActualTypeArguments()[1], null));
+                        return new MapTypeCreator(LinkedHashMap::new, () -> get(pType.getActualTypeArguments()[1], null));
                     } else if (pType.getRawType() == List.class) {
                         return new ListTypeCreator(registry.getConverter(pType.getActualTypeArguments()[0]), annotations);
                     } else if (pType.getRawType() == Set.class) {
