@@ -1,68 +1,97 @@
 package com.netflix.archaius.sources;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.api.OrderedKey;
+import com.netflix.archaius.api.Layers;
+import com.netflix.archaius.api.PropertySource;
 
 public class OrderedPropertySourceTest {
+    private static final PropertySource override = ImmutablePropertySource.builder()
+            .named("override")
+            .put("foo.bar", "override")
+            .build();
+    
+    private static final PropertySource application = ImmutablePropertySource.builder()
+            .named("application")
+            .put("foo.bar", "application")
+            .build();
+    
+    private static final PropertySource lib1 = ImmutablePropertySource.builder()
+            .named("lib")
+            .put("foo.bar", "lib1")
+            .put("default.other", "default")
+            .put("default.bar", "default")
+            .build();
+
+    private static final PropertySource lib2 = ImmutablePropertySource.builder()
+            .named("lib")
+            .put("foo.bar", "lib2")
+            .build();
+    
     @Test
-    public void testDefault() {
+    public void emptySources() {
+        OrderedPropertySource source = new OrderedPropertySource("root");
         
+        Assert.assertFalse(source.getProperty("foo").isPresent());
+        Assert.assertTrue( source.isEmpty());
+        Assert.assertTrue( source.getPropertyNames().isEmpty());
+        Assert.assertEquals("root", source.getName());
+        
+        Assert.assertEquals(0, source.children().count());
+        Assert.assertEquals(0, source.stream().count());
+        Assert.assertEquals(0, source.stream("prefix").count());
+        Assert.assertEquals(0, source.flattened().count());
+        Assert.assertEquals(0, source.namespaced("n1", "ns2").count());
     }
     
     @Test
-    public void testOverride() {
+    public void override() {
         OrderedPropertySource source = new OrderedPropertySource("root");
-        source.addPropertySource(OrderedKey.of("override", 1), ImmutablePropertySource.builder()
-                .named("override")
-                .put("foo.bar", "override")
-                .build());
-        source.addPropertySource(OrderedKey.of("test", 2), ImmutablePropertySource
-                .builder()
-                .named("test")
-                .put("foo.bar", "bar")
-                .build());
-        source.addPropertySource(OrderedKey.of("lib", 3), ImmutablePropertySource.builder()
-                .named("lib")
-                .put("lib", "value")
-                .put("foo.bar", "lib")
-                .put("default.other", "lib")
-                .put("default.bar", "lib")
-                .build());
         
-//        source.stream()
-//            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue()));
-//        
-//        source.stream("foo")
-//            .forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue()));
-//        
-//        source.children().collect(SourcePrinter::new, SourcePrinter::onPropertySource, SourcePrinter::finish);
+        source.addPropertySource(Layers.LIBRARIES, lib1);
+        Assert.assertEquals("lib1", source.getProperty("foo.bar").get());
+
+        source.addPropertySource(Layers.LIBRARIES, lib2);
+        Assert.assertEquals("lib2", source.getProperty("foo.bar").get());
         
-        source.namespaced("foo", "default")
-            .forEach(entry -> System.out.println(entry.getKey() + " = " + entry.getValue()));
+        source.addPropertySource(Layers.APPLICATION, application);
+        Assert.assertEquals("application", source.getProperty("foo.bar").get());
         
-//        List<String> override = source.flattened()
-//            .filter(s -> s.getProperty("foo.bar").isPresent())
-//            .collect(ArrayList::new, 
-//                    (list, s) -> list.add(s.getName() + " : " + s.getProperty("foo.bar").get()),
-//                    ArrayList::addAll)
-//            ;
-//        
+        source.addPropertySource(Layers.OVERRIDE, override);
+        Assert.assertEquals("override", source.getProperty("foo.bar").get());
+    }
+
+    @Test
+    public void namespaced() {
+        OrderedPropertySource source = new OrderedPropertySource("root");
+        source.addPropertySource(Layers.LIBRARIES, lib1);
+        source.addPropertySource(Layers.LIBRARIES, lib2);
+        source.addPropertySource(Layers.APPLICATION, application);
+        source.addPropertySource(Layers.OVERRIDE, override);
         
+        Assert.assertEquals(
+            Arrays.asList("other=default", "bar=override"), 
+            source.namespaced("foo", "default")
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.toList()));
     }
     
     @Test
     public void testNotification() {
         MutablePropertySource mutable = new MutablePropertySource("settable");
-        mutable.setProperty("foo.bar", "override");
         
         OrderedPropertySource source = new OrderedPropertySource("test");
-        source.addPropertySource(OrderedKey.of("test", 2), ImmutablePropertySource.builder()
-                .put("foo.bar", "bar")
-                .build());
-        source.addPropertySource(OrderedKey.of("override", 1), mutable);
+        source.addPropertySource(Layers.APPLICATION, application);
+        source.addPropertySource(Layers.OVERRIDE, mutable);
+        
+        Assert.assertEquals("lib1", source.getProperty("foo.bar").get());
         
         source.addListener((s) -> System.out.println("Update"));
-        mutable.setProperty("foo.bar", "update");
+        
+        mutable.setProperty("foo.bar", "override");
     }
 }
