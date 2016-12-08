@@ -1,11 +1,14 @@
 package com.netflix.archaius.api;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -113,4 +116,27 @@ public interface PropertySource {
         return Stream.concat(Stream.of(this), children().flatMap(PropertySource::flattened));
     }
 
+    default Stream<String> keys(String prefix) {
+        return stream(prefix).map(entry -> entry.getKey());
+    }
+    
+    /**
+     * Trace the sources that contain the request properties and return a map of source name to value
+     * in override order.
+     * 
+     * @param propertyName
+     * @return
+     */
+    default Map<String, Object> trace(String propertyName) {
+        return flattened()
+            .flatMap(s -> Collections.singletonMap(s, s.getProperty(propertyName)).entrySet().stream())
+            .filter(entry -> entry.getValue().isPresent())
+            .collect(Collectors.toMap(
+                entry -> entry.getKey().getName(), 
+                entry -> entry.getValue().get(), 
+                (u, v) -> {
+                    throw new IllegalStateException(String.format("Duplicate key %s", u));
+                }, 
+                LinkedHashMap::new));
+    }
 }

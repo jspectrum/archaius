@@ -29,7 +29,7 @@ import javax.xml.bind.DatatypeConverter;
 
 public class StringConverterRegistry {
 
-    private static final Map<Type, Function<String, ?>> DEFAULT_CONVERTERS = new IdentityHashMap<>(75);
+    public static final Map<Type, Function<String, ?>> DEFAULT_CONVERTERS = new IdentityHashMap<>(75);
     
     static {
         DEFAULT_CONVERTERS.put(String.class, v->v);

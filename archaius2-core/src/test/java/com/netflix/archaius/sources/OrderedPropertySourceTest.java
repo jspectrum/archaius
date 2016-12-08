@@ -1,6 +1,7 @@
 package com.netflix.archaius.sources;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
@@ -21,14 +22,14 @@ public class OrderedPropertySourceTest {
             .build();
     
     private static final PropertySource lib1 = ImmutablePropertySource.builder()
-            .named("lib")
+            .named("lib1")
             .put("foo.bar", "lib1")
             .put("default.other", "default")
             .put("default.bar", "default")
             .build();
 
     private static final PropertySource lib2 = ImmutablePropertySource.builder()
-            .named("lib")
+            .named("lib2")
             .put("foo.bar", "lib2")
             .build();
     
@@ -93,5 +94,28 @@ public class OrderedPropertySourceTest {
         source.addListener((s) -> System.out.println("Update"));
         
         mutable.setProperty("foo.bar", "override");
+    }
+    
+    @Test
+    public void listSources() {
+        OrderedPropertySource source = new OrderedPropertySource("root");
+        source.addPropertySource(Layers.LIBRARIES, lib1);
+        source.addPropertySource(Layers.LIBRARIES, lib2);
+        source.addPropertySource(Layers.APPLICATION, application);
+        source.addPropertySource(Layers.OVERRIDE, override);
+
+        Map<String, Object> sources = source.trace("foo.bar");
+        
+        System.out.println(sources);;
+//            .flatMap(s -> { 
+//                Optional<Object> property = s.getProperty("foo.bar");
+//                if (property.isPresent()) {
+//                    return Collections.<String, Object>singletonMap(s.getName(), property.get());
+//                } else {
+//                    return Streams.<Map.Entry<String, Object>>empty();
+//                }
+//            }
+//            ).collect(LinkedHashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), (r1, r2) -> r1);
+            
     }
 }
