@@ -3,82 +3,26 @@ package com.netflix.archaius;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import com.netflix.archaius.api.Configuration;
+import com.netflix.archaius.api.PropertyNode;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.api.StrInterpolator;
-import com.netflix.archaius.interpolate.CommonsStrInterpolator;
+import com.netflix.archaius.api.ResolverLookup;
+import com.netflix.archaius.node.PropertySourcePropertyNode;
+import com.netflix.archaius.node.ResolverLookupImpl;
+import com.netflix.archaius.sources.InterpolatingPropertySource;
 
-public class PropertySourceBasedConfiguration implements Configuration {
+public class PropertySourceBasedConfiguration<PS extends PropertySource> implements Configuration<PS> {
 
-    static Function<Entry<String, Object>, Entry<String, Supplier<Object>>> interpolate(Function<Object, Object> interpolator) {
-        return entry -> new Entry<String, Supplier<Object>>() {
-            @Override
-            public String getKey() { 
-                return entry.getKey(); 
-            }
-       
-            @Override
-            public Supplier<Object> getValue() { 
-                return () -> interpolator.apply(entry.getValue()); 
-            }
-
-            @Override
-            public Supplier<Object> setValue(Supplier<Object> value) {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
+    private final ResolverLookup lookup;
+    private final PS source;
+    private final PropertySource interpolated;
     
-    private final StringConverterRegistry registry;
-    private final Function<Object, Object> interpolator;
-    private final PropertySource propertySource;
-    
-    public PropertySourceBasedConfiguration(PropertySource propertySource) {
-        this.propertySource = propertySource;
-        
-        StrInterpolator.Lookup lookup = key -> propertySource.getProperty(key).map(Object::toString).orElse(null);
-        this.interpolator = value -> {
-            if (value.getClass() == String.class) {
-                return CommonsStrInterpolator.INSTANCE.create(lookup).resolve((String)value);
-            }
-            return value;
-        };
-        
-        this.registry = StringConverterRegistry.newBuilder().build();
-    }
-
-    @Override
-    public Stream<Entry<String, Supplier<Object>>> stream() {
-        return propertySource.stream().map(interpolate(interpolator));
-    }
-
-    @Override
-    public Stream<Entry<String, Supplier<Object>>> stream(String prefix) {
-        if (!prefix.endsWith(".")) {
-            return stream(prefix + ".");
-        } else {
-            return propertySource.stream(prefix)
-                .map(interpolate(interpolator));
-        }
-    }
-
-    @Override
-    public Optional<Object> get(String key, Type type) {
-        return propertySource.getProperty(key).map(interpolator).map(value -> {
-            if (value.getClass() == String.class) {
-                return registry.getConverter(type).apply((String)value);
-            } else if (value.getClass() == type) {
-                return value;
-            } else {
-                throw new IllegalArgumentException("Expected String or " + value.getClass() + " but got " + type.getTypeName());
-            }
-        });
+    public PropertySourceBasedConfiguration(PS source) {
+        this.interpolated = new InterpolatingPropertySource(source);
+        this.source = source;
+        this.lookup = new ResolverLookupImpl();
     }
 
     @Override
@@ -133,24 +77,28 @@ public class PropertySourceBasedConfiguration implements Configuration {
 
     @Override
     public Optional<?> getProperty(String key) {
-        return propertySource.getProperty(key);
+        return source.getProperty(key);
     }
     
     @Override
+    public Optional<Object> get(String key, Type type) {
+        PropertyNode node = new PropertySourcePropertyNode(interpolated, key);
+        return Optional.ofNullable(lookup.get(type).resolve(node, lookup));
+    }
+
+    @Override
     public <T> Optional<T> get(String key, Class<T> type) {
-        return (Optional<T>) propertySource.getProperty(key).map(interpolator).map(value -> {
-            if (value.getClass() == String.class) {
-                return registry.getConverter(type).apply((String)value);
-            } else if (value.getClass() == type) {
-                return value;
-            } else {
-                throw new IllegalArgumentException("Expected String or " + value.getClass() + " but got " + type.getTypeName());
-            }
-        });
+        PropertyNode node = new PropertySourcePropertyNode(interpolated, key);
+        return Optional.ofNullable(lookup.get(type).resolve(node, lookup));
     }
 
     @Override
     public boolean isEmpty() {
-        return propertySource.isEmpty();
+        return source.isEmpty();
+    }
+
+    @Override
+    public PS getPropertySource() {
+        return source;
     }
 }

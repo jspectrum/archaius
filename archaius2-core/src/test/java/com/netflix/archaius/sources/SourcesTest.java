@@ -60,6 +60,6 @@ public class SourcesTest {
         
         PropertySourceBasedConfiguration config = new PropertySourceBasedConfiguration(source);
         
-        config.stream().forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue().get()));
+        config.getPropertySource().stream().forEach(entry -> System.out.println("1:" + entry.getKey() + " = " + entry.getValue()));
     }
 }

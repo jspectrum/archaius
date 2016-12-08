@@ -3,12 +3,9 @@ package com.netflix.archaius.api;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-public interface Configuration {
+public interface Configuration<PS extends PropertySource> {
 
     public Optional<Long> getLong(String key);
 
@@ -36,9 +33,7 @@ public interface Configuration {
     
     public <T> Optional<T> get(String key, Class<T> type);
 
-    public Stream<Entry<String, Supplier<Object>>> stream();
-
-    public Stream<Entry<String, Supplier<Object>>> stream(String prefix);
-
     public boolean isEmpty();
+
+    PS getPropertySource();
 }

@@ -46,7 +46,7 @@ public class OrderedPropertySourceTest {
         Assert.assertEquals(0, source.stream().count());
         Assert.assertEquals(0, source.stream("prefix").count());
         Assert.assertEquals(0, source.flattened().count());
-        Assert.assertEquals(0, source.namespaced("n1", "ns2").count());
+        Assert.assertEquals(0, source.fallbacks("n1", "ns2").count());
     }
     
     @Test
@@ -76,7 +76,7 @@ public class OrderedPropertySourceTest {
         
         Assert.assertEquals(
             Arrays.asList("other=default", "bar=override"), 
-            source.namespaced("foo", "default")
+            source.fallbacks("foo", "default")
                 .map(entry -> entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.toList()));
     }
@@ -104,18 +104,8 @@ public class OrderedPropertySourceTest {
         source.addPropertySource(Layers.APPLICATION, application);
         source.addPropertySource(Layers.OVERRIDE, override);
 
-        Map<String, Object> sources = source.trace("foo.bar");
+        Map<String, Object> sources = source.sources("foo.bar");
         
         System.out.println(sources);;
-//            .flatMap(s -> { 
-//                Optional<Object> property = s.getProperty("foo.bar");
-//                if (property.isPresent()) {
-//                    return Collections.<String, Object>singletonMap(s.getName(), property.get());
-//                } else {
-//                    return Streams.<Map.Entry<String, Object>>empty();
-//                }
-//            }
-//            ).collect(LinkedHashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), (r1, r2) -> r1);
-            
     }
 }

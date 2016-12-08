@@ -5,13 +5,10 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.netflix.archaius.api.PropertyNode;
+import com.netflix.archaius.PropertySourceBasedConfiguration;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.api.ResolverLookup;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
-import com.netflix.archaius.node.ResolverLookupImpl;
-import com.netflix.archaius.node.PropertySourcePropertyNode;
 import com.netflix.archaius.sources.ImmutablePropertySource;
 
 public class PropertySourcePropertyNodeTest {
@@ -41,14 +38,11 @@ public class PropertySourcePropertyNodeTest {
 //                .put("foo.map", "a=1,b=2,c=3")
                 .put("foo.map.a1", "1")
                 .put("foo.map.a2", "2")
-                .put("foo.map.a3", "3")
+                .put("foo.map.a3", "${value}")
                 .build();
         
-        PropertyNode node = new PropertySourcePropertyNode(source).getNode("foo");
-        
-        ResolverLookup lookup = new ResolverLookupImpl();
-        
-        Foo foo = lookup.get(Foo.class).resolve(node, lookup);
+        PropertySourceBasedConfiguration<PropertySource> configuration = new PropertySourceBasedConfiguration<>(source);
+        Foo foo = configuration.get("foo", Foo.class).get();
 
         System.out.println(foo);
     }

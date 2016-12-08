@@ -100,7 +100,7 @@ public interface PropertySource {
      * @param namespaces
      * @return Stream of unique entries from first seen namespace
      */
-    default Stream<Map.Entry<String, Object>> namespaced(String... namespaces) {
+    default Stream<Map.Entry<String, Object>> fallbacks(String... namespaces) {
         Set<String> seen = new HashSet<>();
         return Stream.of(namespaces)
             .flatMap(this::stream)
@@ -127,7 +127,7 @@ public interface PropertySource {
      * @param propertyName
      * @return
      */
-    default Map<String, Object> trace(String propertyName) {
+    default Map<String, Object> sources(String propertyName) {
         return flattened()
             .flatMap(s -> Collections.singletonMap(s, s.getProperty(propertyName)).entrySet().stream())
             .filter(entry -> entry.getValue().isPresent())
