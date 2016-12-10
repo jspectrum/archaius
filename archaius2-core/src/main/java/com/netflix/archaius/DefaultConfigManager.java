@@ -26,7 +26,7 @@ import com.netflix.archaius.api.ConfigManager;
 import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Layers;
-import com.netflix.archaius.api.OrderedKey;
+import com.netflix.archaius.api.Layer;
 import com.netflix.archaius.api.config.CompositeConfig.CompositeVisitor;
 import com.netflix.archaius.cascade.NoCascadeStrategy;
 import com.netflix.archaius.config.AbstractConfig;
@@ -115,7 +115,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @param layer
          * @return Chainable builder
          */
-        public Builder addResourceToLayer(OrderedKey layer, String resourceName) {
+        public Builder addResourceToLayer(Layer layer, String resourceName) {
             Preconditions.checkState(configManager != null, "Builder already built");
             Preconditions.checkState(resourceName != null, "Resource name must not be empty");
             LOG.info("Adding config {} to layer {}", resourceName, layer);
@@ -132,7 +132,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @param loader
          * @return Chainable builder
          */
-        public Builder addResourceToLayer(OrderedKey layer, String resourceName, Function<ConfigLoader.Loader, ConfigLoader.Loader> loader) {
+        public Builder addResourceToLayer(Layer layer, String resourceName, Function<ConfigLoader.Loader, ConfigLoader.Loader> loader) {
             Preconditions.checkState(configManager != null, "Builder already built");
             Preconditions.checkState(resourceName != null , "Resource name must not be empty");
             LOG.info("Adding config {} to layer {}", resourceName, layer);
@@ -149,7 +149,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @param props
          * @return Chainable builder
          */
-        public Builder addConfigToLayer(OrderedKey layer, String name, Properties props) {
+        public Builder addConfigToLayer(Layer layer, String name, Properties props) {
             Preconditions.checkState(configManager != null, "Builder already built");
             LOG.info("Adding config {} to layer {}", name, layer);
             actions.add(Element.create(layer, name, (ConfigManager manager) -> manager.addConfigToLayer(layer, name, props)));
@@ -165,7 +165,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @param config
          * @return Chainable builder
          */
-        public Builder addConfigToLayer(OrderedKey layer, String name, Config config) {
+        public Builder addConfigToLayer(Layer layer, String name, Config config) {
             Preconditions.checkState(configManager != null, "Builder already built");
             LOG.info("Adding config {} to layer {}", name, layer);
             actions.add(Element.create(layer, name, (ConfigManager manager) -> manager.addConfigToLayer(layer, name, config)));
@@ -179,7 +179,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
          * @param consumer
          * @return Chainable builder
          */
-        public Builder adviseLayer(OrderedKey layer, Consumer<ConfigManager> consumer) {
+        public Builder adviseLayer(Layer layer, Consumer<ConfigManager> consumer) {
             actions.add(Element.create(layer, "", consumer));
             return this;
         }
@@ -223,7 +223,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     }
     
     private static class Element<T> {
-        private final OrderedKey layer;
+        private final Layer layer;
         private final String name;
         private final int id;
         
@@ -231,11 +231,11 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
         
         private static final AtomicInteger idCounter = new AtomicInteger();
         
-        static <T> Element<T> create(OrderedKey layer, String name, T value) {
+        static <T> Element<T> create(Layer layer, String name, T value) {
             return new Element<T>(layer, name, value);
         }
         
-        private Element(OrderedKey layer, String name, T value) {
+        private Element(Layer layer, String name, T value) {
             this.layer = layer;
             this.name = name;
             this.id = idCounter.incrementAndGet();
@@ -351,12 +351,12 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     }
     
     @Override
-    public synchronized void addResourceToLayer(OrderedKey layer, String resourceName) {
+    public synchronized void addResourceToLayer(Layer layer, String resourceName) {
         addResourceToLayer(layer, resourceName, loader -> loader);
     }
 
     @Override
-    public synchronized void addResourceToLayer(OrderedKey layer, String resourceName, Function<Loader, Loader> loader) {
+    public synchronized void addResourceToLayer(Layer layer, String resourceName, Function<Loader, Loader> loader) {
         if (!loadedResources.add(resourceName)) {
             LOG.info("Resource {} already loaded", resourceName);
             return;
@@ -366,12 +366,12 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     }
 
     @Override
-    public synchronized void addConfigToLayer(OrderedKey layer, String name, Properties props) {
+    public synchronized void addConfigToLayer(Layer layer, String name, Properties props) {
         addConfigToLayer(layer, name, MapConfig.from(props));
     }
 
     @Override
-    public synchronized void addConfigToLayer(OrderedKey layer, String name, Config config) {
+    public synchronized void addConfigToLayer(Layer layer, String name, Config config) {
         Preconditions.checkArgument(config != null, "Config must not be null");
         Preconditions.checkArgument(layer != null, "Layer must not be null");
         Preconditions.checkArgument(name != null, "Name must not be null");
@@ -470,7 +470,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     }
 
     @Override
-    public Optional<Config> getConfig(OrderedKey layer, String resourceName) {
+    public Optional<Config> getConfig(Layer layer, String resourceName) {
         Preconditions.checkArgument(layer != null, "Layer must not be null");
         Preconditions.checkArgument(resourceName != null, "Name must not be empty");
         
@@ -484,7 +484,7 @@ public final class DefaultConfigManager extends AbstractConfig implements Config
     }
 
     @Override
-    public synchronized Optional<Config> removeConfig(OrderedKey layer, String resourceName) {
+    public synchronized Optional<Config> removeConfig(Layer layer, String resourceName) {
         Preconditions.checkArgument(layer != null, "Layer must not be null");
         Preconditions.checkArgument(resourceName != null, "Name must not be empty");
         

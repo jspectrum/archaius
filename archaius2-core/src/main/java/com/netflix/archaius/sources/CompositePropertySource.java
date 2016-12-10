@@ -19,9 +19,7 @@ public class CompositePropertySource extends ImmutablePropertySource {
     
     private static SortedMap<String, Object> joinSources(Collection<PropertySource> sources) {
         SortedMap<String, Object> values = new TreeMap<>();
-        sources.forEach(source -> source.stream().forEach(entry -> {
-            values.putIfAbsent(entry.getKey(), entry.getValue());
-        }));
+        sources.forEach(source -> source.forEach((key, value) -> values.putIfAbsent(key, value)));
         return values;
     }
     

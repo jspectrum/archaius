@@ -11,17 +11,11 @@ public class SourcePrinter {
         
     }
     
-    public void onPropertySource(PropertySource t) {
+    public void onPropertySource(PropertySource source) {
+        System.out.println(StringUtils.repeat(" ", indent) + source.getName());
         indent++;
-        System.out.println(StringUtils.repeat(" ", indent) + t.getName());
-        if (t instanceof CompositePropertySource) {
-            ((CompositePropertySource)t).children().forEach(s -> onPropertySource(s));
-        }
-        else {
-            indent++;
-            t.stream().forEach(entry -> onProperty(entry.getKey(), entry.getValue().toString()));
-            indent--;
-        }
+        source.forEach((key, value) -> onProperty(key, value.toString()));
+        source.children().forEach(s -> onPropertySource(s));
         indent--;
     }
 

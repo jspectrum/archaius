@@ -2,13 +2,11 @@ package com.netflix.archaius.sources;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.internal.Preconditions;
@@ -82,7 +80,7 @@ public class ImmutablePropertySource implements PropertySource {
         return new Builder();
     }
     
-    public ImmutablePropertySource(String name, SortedMap<String, Object> values) {
+    ImmutablePropertySource(String name, SortedMap<String, Object> values) {
         this.name = name;
         this.properties = values;
     }
@@ -98,8 +96,13 @@ public class ImmutablePropertySource implements PropertySource {
     }
 
     @Override
-    public Collection<String> getPropertyNames() {
+    public Collection<String> getKeys() {
         return properties.keySet();
+    }
+
+    @Override
+    public Collection<String> getKeys(String prefix) {
+        return properties.subMap(prefix, prefix + Character.MAX_VALUE).keySet();
     }
 
     @Override
@@ -108,19 +111,30 @@ public class ImmutablePropertySource implements PropertySource {
     }
 
     @Override
-    public Stream<Entry<String, Object>> stream() {
-        return properties.entrySet().stream();
+    public int size() {
+        return properties.size();
     }
+    
+
+//    @Override
+//    public Stream<Entry<String, Object>> stream() {
+//        return properties.entrySet().stream();
+//    }
+//
+//    @Override
+//    public Stream<Entry<String, Object>> stream(String prefix) {
+//        if (!prefix.endsWith(".")) {
+//            return stream(prefix + ".");
+//        } else {
+//            return properties.subMap(prefix, prefix + Character.MAX_VALUE)
+//                .entrySet()
+//                .stream()
+//                .map(PropertySourceUtils.stripPrefix(prefix));
+//        }
+//    }
 
     @Override
-    public Stream<Entry<String, Object>> stream(String prefix) {
-        if (!prefix.endsWith(".")) {
-            return stream(prefix + ".");
-        } else {
-            return properties.subMap(prefix, prefix + Character.MAX_VALUE)
-                .entrySet()
-                .stream()
-                .map(PropertySourceUtils.stripPrefix(prefix));
-        }
+    public PropertySource snapshot() {
+        return this;
     }
 }

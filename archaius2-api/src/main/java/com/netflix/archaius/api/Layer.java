@@ -6,18 +6,18 @@ package com.netflix.archaius.api;
  * over higher orders.  Within a layer configurations are prioritized by
  * insertion order (or reversed if 'reversed=true')
  */
-public final class OrderedKey {
+public final class Layer {
     private final String name;
     private final int order;
     
     // TODO: after(), before()
-    private OrderedKey(String name, int order) {
+    private Layer(String name, int order) {
         this.name = name;
         this.order = order;
     }
 
-    public static OrderedKey of(String name, int order) {
-        return new OrderedKey(name, order);
+    public static Layer of(String name, int order) {
+        return new Layer(name, order);
     }
     
     public int getOrder() {
@@ -45,7 +45,7 @@ public final class OrderedKey {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        OrderedKey other = (OrderedKey) obj;
+        Layer other = (Layer) obj;
         if (name == null) {
             if (other.name != null)
                 return false;

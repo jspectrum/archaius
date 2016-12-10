@@ -11,18 +11,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import com.netflix.archaius.api.OrderedKey;
+import com.netflix.archaius.api.Layer;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.internal.GarbageCollectingSet;
+import com.netflix.archaius.internal.WeakReferenceSet;
 
-public class OrderedPropertySource extends DelegatingPropertySource {
+public class LayeredPropertySource extends DelegatingPropertySource {
 
-    public OrderedPropertySource(String name) {
+    public LayeredPropertySource(String name) {
         this.name = name;
     }
     
     private final String name;
-    private final GarbageCollectingSet<Consumer<PropertySource>> listeners = new GarbageCollectingSet<>();
+    private final WeakReferenceSet<Consumer<PropertySource>> listeners = new WeakReferenceSet<>();
     private final AtomicReference<State> state = new AtomicReference<>(new State(Collections.emptyList()));
     
     @Override
@@ -30,7 +30,7 @@ public class OrderedPropertySource extends DelegatingPropertySource {
         return this.name;
     }
 
-    public void addPropertySource(OrderedKey layer, PropertySource source) {
+    public void addPropertySource(Layer layer, PropertySource source) {
         state.getAndUpdate(current -> {
             List<Element> newEntries = new ArrayList<>(current.elements);
             newEntries.add(Element.create(layer, source));
@@ -42,7 +42,7 @@ public class OrderedPropertySource extends DelegatingPropertySource {
     }
 
     @Override
-    public Runnable addListener(Consumer<PropertySource> consumer) {
+    public AutoCloseable addListener(Consumer<PropertySource> consumer) {
         return listeners.add(consumer, this);
     }
     
@@ -56,32 +56,27 @@ public class OrderedPropertySource extends DelegatingPropertySource {
     }
     
     private static class Element {
-        private final OrderedKey layer;
-        private final int insertionOrder;
-        
-        private final PropertySource value;
-        
         private static final AtomicInteger insertionOrderCounter = new AtomicInteger();
         
-        static Element create(OrderedKey layer, PropertySource value) {
+        private final Layer layer;
+        private final int insertionOrder;
+        private final PropertySource source;
+        
+        static Element create(Layer layer, PropertySource value) {
             return new Element(layer, value);
         }
         
-        private Element(OrderedKey layer, PropertySource value) {
+        private Element(Layer layer, PropertySource source) {
             this.layer = layer;
             this.insertionOrder = insertionOrderCounter.incrementAndGet();
-            this.value = value;
-        }
-        
-        public PropertySource getPropertySource() {
-            return value;
+            this.source = source;
         }
         
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = 31 + ((value == null) ? 0 : value.hashCode());
+            result = 31 + ((source == null) ? 0 : source.hashCode());
             result = prime * result + ((layer == null) ? 0 : layer.hashCode());
             return result;
         }
@@ -95,10 +90,10 @@ public class OrderedPropertySource extends DelegatingPropertySource {
             if (getClass() != obj.getClass())
                 return false;
             Element other = (Element) obj;
-            if (value == null) {
-                if (other.value != null)
+            if (source == null) {
+                if (other.source != null)
                     return false;
-            } else if (!value.equals(other.value))
+            } else if (!source.equals(other.source))
                 return false;
             if (layer == null) {
                 if (other.layer != null)
@@ -110,7 +105,7 @@ public class OrderedPropertySource extends DelegatingPropertySource {
 
         @Override
         public String toString() {
-            return "Element [layer=" + layer + ", id=" + insertionOrder + ", value=" + value + "]";
+            return "Element [layer=" + layer + ", id=" + insertionOrder + ", value=" + source + "]";
         }
     }
     
@@ -133,11 +128,7 @@ public class OrderedPropertySource extends DelegatingPropertySource {
             SortedMap<String, Object> map = new TreeMap<>();
             
             this.elements = entries;
-            this.elements
-                .stream()
-                .flatMap(element -> element.value.stream())
-                .forEach(entry -> map.putIfAbsent(entry.getKey(), entry.getValue())
-                );
+            this.elements.forEach(element -> element.source.forEach((key, value) -> map.putIfAbsent(key, value)));
             
             source = new ImmutablePropertySource(name, map);
         }
@@ -149,6 +140,6 @@ public class OrderedPropertySource extends DelegatingPropertySource {
 
     @Override
     public Stream<PropertySource> children() {
-        return state.get().elements.stream().map(element -> element.value);
+        return state.get().elements.stream().map(element -> element.source);
     }
 }

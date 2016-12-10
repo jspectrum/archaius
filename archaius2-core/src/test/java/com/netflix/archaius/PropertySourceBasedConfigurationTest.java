@@ -1,4 +1,4 @@
-package com.netflix.archaius.config.node;
+package com.netflix.archaius;
 
 import java.util.List;
 import java.util.Map;
@@ -11,7 +11,7 @@ import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
 import com.netflix.archaius.sources.ImmutablePropertySource;
 
-public class PropertySourcePropertyNodeTest {
+public class PropertySourceBasedConfigurationTest {
     public static interface Foo {
         String getString();
         
@@ -41,9 +41,12 @@ public class PropertySourcePropertyNodeTest {
                 .put("foo.map.a3", "${value}")
                 .build();
         
-        PropertySourceBasedConfiguration<PropertySource> configuration = new PropertySourceBasedConfiguration<>(source);
+        PropertySourceBasedConfiguration configuration = new PropertySourceBasedConfiguration(source);
         Foo foo = configuration.get("foo", Foo.class).get();
 
+//        foo.onString((newValue) -> do something);
+        
         System.out.println(foo);
     }
+    
 }

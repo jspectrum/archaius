@@ -9,9 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.netflix.archaius.api.Resolver;
-import com.netflix.archaius.api.ResolverLookup;
 import com.netflix.archaius.api.PropertyNode;
+import com.netflix.archaius.api.PropertyNode.Resolver;
+import com.netflix.archaius.api.PropertyNode.ResolverLookup;
 import com.netflix.archaius.api.annotations.PropertyName;
 
 /**
@@ -36,15 +36,20 @@ public class ProxyResolver<T> implements Resolver<T> {
     public T resolve(PropertyNode node, ResolverLookup resolvers) {
         final Map<Method, MethodInvoker> methods = new HashMap<>();
         for (Method method : type.getDeclaredMethods()) {
-            final Object value = resolvers.get(method.getGenericReturnType())
-                .resolve(node.getNode(nameResolver.apply(method)), resolvers);
-            
-            methods.put(method, new MethodInvoker() {
-                @Override
-                public Object invoke(Object... args) {
-                    return value;
-                }
-            });
+            final PropertyNode childNode = node.getChild(nameResolver.apply(method));
+            try {
+                final Object value = resolvers.get(method.getGenericReturnType())
+                    .resolve(childNode, resolvers);
+                
+                methods.put(method, new MethodInvoker() {
+                    @Override
+                    public Object invoke(Object... args) {
+                        return value;
+                    }
+                });
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to map method " + method + " at " + childNode, e);
+            }
         }
         
         // Hack so that default interface methods may be called from a proxy

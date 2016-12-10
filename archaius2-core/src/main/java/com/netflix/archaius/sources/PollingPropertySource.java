@@ -3,14 +3,14 @@ package com.netflix.archaius.sources;
 import java.util.function.Consumer;
 
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.internal.GarbageCollectingSet;
+import com.netflix.archaius.internal.WeakReferenceSet;
 
 /**
  * 
  */
 public class PollingPropertySource extends DelegatingPropertySource {
     private final Runnable cancellation;
-    private final GarbageCollectingSet<Consumer<PropertySource>> listeners = new GarbageCollectingSet<>();
+    private final WeakReferenceSet<Consumer<PropertySource>> listeners = new WeakReferenceSet<>();
     private volatile PropertySource delegate;
     
     /**
@@ -41,7 +41,7 @@ public class PollingPropertySource extends DelegatingPropertySource {
     }
 
     @Override
-    public Runnable addListener(Consumer<PropertySource> listener) {
+    public AutoCloseable addListener(Consumer<PropertySource> listener) {
         return listeners.add(listener, this);
     }
 

@@ -8,8 +8,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.PropertyNode;
-import com.netflix.archaius.api.Resolver;
-import com.netflix.archaius.api.ResolverLookup;
+import com.netflix.archaius.api.PropertyNode.Resolver;
+import com.netflix.archaius.api.PropertyNode.ResolverLookup;
 
 public class SetResolver implements Resolver<Set<?>> {
 

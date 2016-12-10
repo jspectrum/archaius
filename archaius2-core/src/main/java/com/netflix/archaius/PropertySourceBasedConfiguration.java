@@ -3,23 +3,24 @@ package com.netflix.archaius;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Optional;
 
 import com.netflix.archaius.api.Configuration;
 import com.netflix.archaius.api.PropertyNode;
+import com.netflix.archaius.api.PropertyNode.ResolverLookup;
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.api.ResolverLookup;
 import com.netflix.archaius.node.PropertySourcePropertyNode;
 import com.netflix.archaius.node.ResolverLookupImpl;
 import com.netflix.archaius.sources.InterpolatingPropertySource;
 
-public class PropertySourceBasedConfiguration<PS extends PropertySource> implements Configuration<PS> {
+public class PropertySourceBasedConfiguration implements Configuration {
 
     private final ResolverLookup lookup;
-    private final PS source;
+    private final PropertySource source;
     private final PropertySource interpolated;
     
-    public PropertySourceBasedConfiguration(PS source) {
+    public PropertySourceBasedConfiguration(PropertySource source) {
         this.interpolated = new InterpolatingPropertySource(source);
         this.source = source;
         this.lookup = new ResolverLookupImpl();
@@ -82,14 +83,22 @@ public class PropertySourceBasedConfiguration<PS extends PropertySource> impleme
     
     @Override
     public Optional<Object> get(String key, Type type) {
-        PropertyNode node = new PropertySourcePropertyNode(interpolated, key);
-        return Optional.ofNullable(lookup.get(type).resolve(node, lookup));
+        try {
+            PropertyNode node = new PropertySourcePropertyNode(interpolated.snapshot()).getChild(key);
+            return Optional.ofNullable(lookup.get(type).resolve(node, lookup));
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to get property " + key + " of type " + type, e);
+        }
     }
 
     @Override
     public <T> Optional<T> get(String key, Class<T> type) {
-        PropertyNode node = new PropertySourcePropertyNode(interpolated, key);
-        return Optional.ofNullable(lookup.get(type).resolve(node, lookup));
+        try {
+            PropertyNode node = new PropertySourcePropertyNode(interpolated.snapshot()).getChild(key);
+            return Optional.ofNullable(lookup.get(type).resolve(node, lookup));
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to get property " + key + " of type " + type, e);
+        }
     }
 
     @Override
@@ -98,7 +107,7 @@ public class PropertySourceBasedConfiguration<PS extends PropertySource> impleme
     }
 
     @Override
-    public PS getPropertySource() {
-        return source;
+    public Collection<String> getPropertyNames() {
+        return source.getKeys();
     }
 }

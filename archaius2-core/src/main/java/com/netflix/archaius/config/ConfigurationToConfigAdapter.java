@@ -13,12 +13,12 @@ import com.netflix.archaius.api.StrInterpolator;
 
 /**
  */
-public class PropertySourceConfig implements Config {
+public class ConfigurationToConfigAdapter implements Config {
 
-    private final PropertySourceBasedConfiguration source;
+    private final PropertySourceBasedConfiguration configuration;
     
-    public PropertySourceConfig(PropertySourceBasedConfiguration source) {
-        this.source = source;
+    public ConfigurationToConfigAdapter(PropertySourceBasedConfiguration source) {
+        this.configuration = source;
     }
     
     @Override
@@ -33,7 +33,7 @@ public class PropertySourceConfig implements Config {
 
     @Override
     public Object getRawProperty(String key) {
-        return source.getProperty(key).orElse(null);
+        return configuration.getProperty(key).orElse(null);
     }
 
     @Override
@@ -156,33 +156,31 @@ public class PropertySourceConfig implements Config {
 
     @Override
     public <T> T get(Class<T> type, String key) {
-        return (T) source.get(key, type).get();
+        return (T) configuration.get(key, type).get();
     }
 
     @Override
     public <T> T get(Class<T> type, String key, T defaultValue) {
-        return (T) source.get(key, type).orElse(defaultValue);
+        return (T) configuration.get(key, type).orElse(defaultValue);
     }
 
     @Override
     public boolean containsKey(String key) {
-        return source.getProperty(key).isPresent();
+        return configuration.getProperty(key).isPresent();
     }
 
     @Override
     public boolean isEmpty() {
-        return source.isEmpty();
+        return configuration.isEmpty();
     }
 
     @Override
     public Iterator<String> getKeys() {
-//        return source.getPropertyNames().iterator();
-        return null;
+        return configuration.getPropertyNames().iterator();
     }
 
     @Override
     public Iterator<String> getKeys(String prefix) {
-//        return new TreeSet<>(source.getPropertyNames()).subSet(prefix, prefix + "/uffff").iterator();
         return null;
     }
 

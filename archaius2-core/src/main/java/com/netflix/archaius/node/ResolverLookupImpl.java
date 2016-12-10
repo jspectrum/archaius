@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.netflix.archaius.StringConverterRegistry;
 import com.netflix.archaius.api.PropertyNode;
-import com.netflix.archaius.api.Resolver;
-import com.netflix.archaius.api.ResolverLookup;
+import com.netflix.archaius.api.PropertyNode.Resolver;
+import com.netflix.archaius.api.PropertyNode.ResolverLookup;
 
 public class ResolverLookupImpl implements ResolverLookup {
     

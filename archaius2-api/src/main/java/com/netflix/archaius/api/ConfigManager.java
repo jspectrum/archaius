@@ -17,7 +17,7 @@ public interface ConfigManager extends Config {
      * @param layer
      * @param resourceName
      */
-    void addResourceToLayer(OrderedKey layer, String resourceName);
+    void addResourceToLayer(Layer layer, String resourceName);
 
     /**
      * Add a named resource to a configuration layer.  The resourceName identifies a base file name
@@ -29,14 +29,14 @@ public interface ConfigManager extends Config {
      * @param resource
      * @param loader
      */
-    void addResourceToLayer(OrderedKey layer, String resourceName, Function<ConfigLoader.Loader, ConfigLoader.Loader> loader);
+    void addResourceToLayer(Layer layer, String resourceName, Function<ConfigLoader.Loader, ConfigLoader.Loader> loader);
 
     /**
      * Add properties to this configuration layer
      * @param layer
      * @param props
      */
-    void addConfigToLayer(OrderedKey layer, String name, Properties props);
+    void addConfigToLayer(Layer layer, String name, Properties props);
     
     /**
      * Add a named configuration to the configuration layer.
@@ -44,7 +44,7 @@ public interface ConfigManager extends Config {
      * @param layerName
      * @param config
      */
-    void addConfigToLayer(OrderedKey layer, String name, Config config);
+    void addConfigToLayer(Layer layer, String name, Config config);
 
     /**
      * Return a named configuration from the specified layer
@@ -52,7 +52,7 @@ public interface ConfigManager extends Config {
      * @param layerName
      * @return
      */
-    Optional<Config> getConfig(OrderedKey layer, String name);
+    Optional<Config> getConfig(Layer layer, String name);
 
     /**
      * Remove a configuration from the specified layer
@@ -61,7 +61,7 @@ public interface ConfigManager extends Config {
      * @param layerName
      * @return The config that was removed
      */
-    Optional<Config> removeConfig(OrderedKey layer, String name);
+    Optional<Config> removeConfig(Layer layer, String name);
 
     Iterable<String> getConfigNames();
 

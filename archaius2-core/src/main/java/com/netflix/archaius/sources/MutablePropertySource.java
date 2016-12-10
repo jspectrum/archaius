@@ -3,20 +3,18 @@ package com.netflix.archaius.sources;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.internal.GarbageCollectingSet;
+import com.netflix.archaius.internal.WeakReferenceSet;
 
 public class MutablePropertySource implements PropertySource {
     private volatile SortedMap<String, Object> properties;
     private final String name;
-    private final GarbageCollectingSet<Consumer<PropertySource>> listeners = new GarbageCollectingSet<>();
+    private final WeakReferenceSet<Consumer<PropertySource>> listeners = new WeakReferenceSet<>();
 
     public MutablePropertySource(String name) {
         this.properties = Collections.emptySortedMap();
@@ -71,31 +69,36 @@ public class MutablePropertySource implements PropertySource {
         return Optional.ofNullable(properties.get(name));
     }
 
-    @Override
-    public Stream<Entry<String, Object>> stream() {
-        return properties.entrySet().stream();
-    }
+//    @Override
+//    public Stream<Entry<String, Object>> stream() {
+//        return properties.entrySet().stream();
+//    }
+//
+//    @Override
+//    public Stream<Entry<String, Object>> stream(String prefix) {
+//        if (!prefix.endsWith(".")) {
+//            return stream(prefix + ".");
+//        } else {
+//            return properties
+//                .subMap(prefix, prefix + Character.MAX_VALUE)
+//                .entrySet()
+//                .stream()
+//                .map(PropertySourceUtils.stripPrefix(prefix));
+//        }
+//    }
 
     @Override
-    public Stream<Entry<String, Object>> stream(String prefix) {
-        if (!prefix.endsWith(".")) {
-            return stream(prefix + ".");
-        } else {
-            return properties
-                .subMap(prefix, prefix + Character.MAX_VALUE)
-                .entrySet()
-                .stream()
-                .map(PropertySourceUtils.stripPrefix(prefix));
-        }
-    }
-
-    @Override
-    public Collection<String> getPropertyNames() {
+    public Collection<String> getKeys() {
         return properties.keySet();
     }
 
     @Override
-    public Runnable addListener(Consumer<PropertySource> consumer) {
+    public Collection<String> getKeys(String prefix) {
+        return properties.subMap(prefix, prefix + Character.MAX_VALUE).keySet();
+    }
+
+    @Override
+    public AutoCloseable addListener(Consumer<PropertySource> consumer) {
         return listeners.add(consumer, this);
     }
     
@@ -106,5 +109,15 @@ public class MutablePropertySource implements PropertySource {
     @Override
     public boolean isEmpty() {
         return properties.isEmpty();
+    }
+
+    @Override
+    public int size() {
+        return properties.size();
+    }
+
+    @Override
+    public PropertySource snapshot() {
+        return new ImmutablePropertySource(name, properties);
     }
 }

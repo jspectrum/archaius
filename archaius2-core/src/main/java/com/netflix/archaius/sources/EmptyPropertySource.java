@@ -28,7 +28,12 @@ public class EmptyPropertySource implements PropertySource {
     }
 
     @Override
-    public Collection<String> getPropertyNames() {
+    public Collection<String> getKeys() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Collection<String> getKeys(String prefix) {
         return Collections.emptySet();
     }
 
@@ -38,17 +43,27 @@ public class EmptyPropertySource implements PropertySource {
     }
 
     @Override
-    public Runnable addListener(Consumer<PropertySource> consumer) {
+    public int size() {
+        return 0;
+    }
+    
+    @Override
+    public AutoCloseable addListener(Consumer<PropertySource> consumer) {
         return () -> {};
     }
 
-    @Override
-    public Stream<Entry<String, Object>> stream() {
-        return Stream.empty();
-    }
+//    @Override
+//    public Stream<Entry<String, Object>> stream() {
+//        return Stream.empty();
+//    }
+//
+//    @Override
+//    public Stream<Entry<String, Object>> stream(String prefix) {
+//        return Stream.empty();
+//    }
 
     @Override
-    public Stream<Entry<String, Object>> stream(String prefix) {
-        return Stream.empty();
+    public PropertySource snapshot() {
+        return this;
     }
 }

@@ -4,7 +4,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.StrInterpolator;
@@ -27,21 +26,6 @@ public class InterpolatingPropertySource extends DelegatingPropertySource {
     }
     
     @Override
-    public Stream<Entry<String, Object>> stream() {
-        return delegate().stream().map(interpolate(interpolator));
-    }
-
-    @Override
-    public Stream<Entry<String, Object>> stream(String prefix) {
-        if (!prefix.endsWith(".")) {
-            return stream(prefix + ".");
-        } else {
-            return delegate().stream(prefix)
-                .map(interpolate(interpolator));
-        }
-    }
-
-    @Override
     protected PropertySource delegate() {
         return delegate;
     }
@@ -51,6 +35,11 @@ public class InterpolatingPropertySource extends DelegatingPropertySource {
         return delegate().getProperty(key).map(interpolator);
     }
     
+    @Override
+    public PropertySource snapshot() {
+        return new InterpolatingPropertySource(delegate.snapshot());
+    }
+
     static Function<Entry<String, Object>, Entry<String, Object>> interpolate(Function<Object, Object> interpolator) {
         return entry -> new Entry<String, Object>() {
             @Override
@@ -69,6 +58,4 @@ public class InterpolatingPropertySource extends DelegatingPropertySource {
             }
         };
     }
-    
-
 }

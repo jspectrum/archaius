@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  * Set like collections with build in garbage collection
  * @param <T>
  */
-public class GarbageCollectingSet<T> {
+public class WeakReferenceSet<T> {
     private final static ReferenceQueue referenceQueue = new ReferenceQueue();
 
     static {
@@ -83,7 +83,7 @@ public class GarbageCollectingSet<T> {
      * @param value
      * @param garbageObject
      */
-    public Runnable add(T value, Object garbageObject) {
+    public AutoCloseable add(T value, Object garbageObject) {
         if (value == null || garbageObject == null) throw new NullPointerException();
         if (value == garbageObject)
             throw new IllegalArgumentException("value can't be equal to garbageObject for gc to work");

@@ -3,9 +3,15 @@ package com.netflix.archaius.api;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Optional;
 
-public interface Configuration<PS extends PropertySource> {
+/**
+ * Top level configuration API for users to read properties. 
+ *
+ * @param <PS>
+ */
+public interface Configuration {
 
     public Optional<Long> getLong(String key);
 
@@ -27,13 +33,31 @@ public interface Configuration<PS extends PropertySource> {
 
     public Optional<Byte> getByte(String key);
 
+    /**
+     * Return a 'raw' property that is neither interpolated nor resolved to a specific type
+     * 
+     * @param key
+     * @return
+     */
     public Optional<?> getProperty(String key);
     
+    /**
+     * Get a property that has been interpolated and resolved to a specific type
+     * @param key
+     * @param type
+     * @return
+     */
     public Optional<Object> get(String key, Type type);
     
+    /**
+     * Get a property that has been interpolated and resolved to a specific type
+     * @param key
+     * @param type
+     * @return
+     */
     public <T> Optional<T> get(String key, Class<T> type);
-
-    public boolean isEmpty();
-
-    PS getPropertySource();
+    
+    Collection<String> getPropertyNames();
+    
+    boolean isEmpty();
 }

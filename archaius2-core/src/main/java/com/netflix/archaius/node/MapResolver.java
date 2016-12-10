@@ -1,12 +1,13 @@
 package com.netflix.archaius.node;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.netflix.archaius.api.PropertyNode;
-import com.netflix.archaius.api.Resolver;
-import com.netflix.archaius.api.ResolverLookup;
+import com.netflix.archaius.api.PropertyNode.Resolver;
+import com.netflix.archaius.api.PropertyNode.ResolverLookup;
 
 public class MapResolver implements Resolver<Map<Object, Object>> {
     private final Type keyType;
@@ -19,16 +20,16 @@ public class MapResolver implements Resolver<Map<Object, Object>> {
     
     @Override
     public Map<Object, Object> resolve(PropertyNode node, ResolverLookup resolvers) {
-        return node.keys()
+        return Collections.unmodifiableMap(node.children().stream()
             .map(key -> {
+                System.out.println("key: " + key);
                 int index = key.indexOf(".");
                 return index == -1 ? key : key.substring(0, index);
             })
             .distinct()
             .collect(Collectors.toMap(
-                key -> key.toString(),
-                key -> resolvers.get(valueType).resolve(node.getNode(key), resolvers))
-            );
+                key -> key,
+                key -> resolvers.get(valueType).resolve(node.getChild(key), resolvers))
+            ));
     }
-
 }
