@@ -13,3 +13,11 @@ application :
         b : 4
     
             
+application.port : 7000
+
+application[${env}=test] :
+    port : 7001
+    
+application[${env}=prod] :
+    port : 7002
+        

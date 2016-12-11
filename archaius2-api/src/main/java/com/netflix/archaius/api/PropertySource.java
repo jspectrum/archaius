@@ -57,7 +57,7 @@ public interface PropertySource {
     /**
      * @return Stream of all entries of this PropertySource
      */
-    default void forEach(BiConsumer<String, Object> consumer) {}
+    void forEach(BiConsumer<String, Object> consumer);
     
     /**
      * @return Return a PropertyNode that provides tree-like traversal of the current PropertySource

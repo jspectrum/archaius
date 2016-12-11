@@ -2,6 +2,7 @@ package com.netflix.archaius.sources;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.netflix.archaius.api.PropertySource;
@@ -46,6 +47,11 @@ public abstract class DelegatingPropertySource implements PropertySource {
     @Override
     public AutoCloseable addListener(Consumer<PropertySource> consumer) {
         return delegate().addListener(consumer);
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        delegate().forEach(consumer);
     }
 
     protected abstract PropertySource delegate();

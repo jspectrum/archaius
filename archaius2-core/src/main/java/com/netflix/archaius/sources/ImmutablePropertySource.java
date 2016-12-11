@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.internal.Preconditions;
@@ -136,5 +137,10 @@ public class ImmutablePropertySource implements PropertySource {
     @Override
     public PropertySource snapshot() {
         return this;
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        properties.forEach(consumer);
     }
 }

@@ -2,10 +2,9 @@ package com.netflix.archaius.sources;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import com.netflix.archaius.api.PropertySource;
 
@@ -52,18 +51,12 @@ public class EmptyPropertySource implements PropertySource {
         return () -> {};
     }
 
-//    @Override
-//    public Stream<Entry<String, Object>> stream() {
-//        return Stream.empty();
-//    }
-//
-//    @Override
-//    public Stream<Entry<String, Object>> stream(String prefix) {
-//        return Stream.empty();
-//    }
-
     @Override
     public PropertySource snapshot() {
         return this;
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
     }
 }

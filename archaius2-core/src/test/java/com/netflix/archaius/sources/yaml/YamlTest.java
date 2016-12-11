@@ -7,18 +7,54 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.netflix.archaius.api.PropertySource;
+import com.netflix.archaius.sources.ImmutablePropertySource;
+
 public class YamlTest {
     @Test
     public void loadExisting() {
-        Map<String, Object> properties = new HashMap<>();
-        Stream.of("loadtest.yml")
-            .map(ClassLoader::getSystemResource)
-            .map(new YamlToPropertySource())
-            .forEach(source -> source.forEach((key, value) -> properties.put(key, value)));
+        PropertySource environment = ImmutablePropertySource.builder()
+                .build();
         
-        Assert.assertEquals(10,  properties.size());
+        PropertySource yamlSource = Stream.of("loadtest.yml")
+                .map(ClassLoader::getSystemResource)
+                .map(new YamlToPropertySource(environment))
+                .findFirst().get();
+        
+        Assert.assertEquals(11,  yamlSource.size());
+        Assert.assertEquals(7000, yamlSource.getProperty("application.port").get());
+    }
+
+    @Test
+    public void loadExistingWithTest() {
+        PropertySource environment = ImmutablePropertySource.builder()
+                .put("env", "test")
+                .build();
+        
+        PropertySource yamlSource = Stream.of("loadtest.yml")
+                .map(ClassLoader::getSystemResource)
+                .map(new YamlToPropertySource(environment))
+                .findFirst().get();
+        
+        Assert.assertEquals(11,  yamlSource.size());
+        Assert.assertEquals(7001, yamlSource.getProperty("application.port").get());
     }
     
+    @Test
+    public void loadExistingWithProd() {
+        PropertySource environment = ImmutablePropertySource.builder()
+                .put("env", "prod")
+                .build();
+        
+        PropertySource yamlSource = Stream.of("loadtest.yml")
+                .map(ClassLoader::getSystemResource)
+                .map(new YamlToPropertySource(environment))
+                .findFirst().get();
+        
+        Assert.assertEquals(11,  yamlSource.size());
+        Assert.assertEquals(7002, yamlSource.getProperty("application.port").get());
+    }
+
     @Test
     public void ignoreMissingFile() {
         Map<String, Object> properties = new HashMap<>();

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.netflix.archaius.api.PropertySource;
@@ -119,5 +120,10 @@ public class MutablePropertySource implements PropertySource {
     @Override
     public PropertySource snapshot() {
         return new ImmutablePropertySource(name, properties);
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Object> consumer) {
+        properties.forEach(consumer);
     }
 }
