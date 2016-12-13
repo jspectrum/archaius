@@ -5,9 +5,9 @@ import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 
-import com.netflix.archaius.PropertySourceBasedConfiguration;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
+import com.netflix.archaius.api.Configuration;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.StrInterpolator;
 
@@ -15,10 +15,10 @@ import com.netflix.archaius.api.StrInterpolator;
  */
 public class ConfigurationToConfigAdapter implements Config {
 
-    private final PropertySourceBasedConfiguration configuration;
+    private final Configuration configuration;
     
-    public ConfigurationToConfigAdapter(PropertySourceBasedConfiguration source) {
-        this.configuration = source;
+    public ConfigurationToConfigAdapter(Configuration configuration) {
+        this.configuration = configuration;
     }
     
     @Override

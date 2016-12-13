@@ -7,20 +7,22 @@ import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
 import com.netflix.archaius.ConfigProxyFactory;
-import com.netflix.archaius.DefaultConfigManager;
 import com.netflix.archaius.DefaultPropertyFactory;
+import com.netflix.archaius.PropertySourceConfiguration;
 import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigManager;
 import com.netflix.archaius.api.ConfigReader;
+import com.netflix.archaius.api.Configuration;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.inject.RuntimeLayer;
+import com.netflix.archaius.config.ConfigurationToConfigAdapter;
 import com.netflix.archaius.config.DefaultSettableConfig;
-import com.netflix.archaius.config.EnvironmentConfig;
-import com.netflix.archaius.config.SystemConfig;
 import com.netflix.archaius.readers.PropertiesConfigReader;
+import com.netflix.archaius.sources.EnvironmentPropertySource;
+import com.netflix.archaius.sources.LayeredPropertySource;
+import com.netflix.archaius.sources.SystemPropertySource;
 import com.netflix.governator.providers.AdvisableAnnotatedMethodScanner;
 import com.netflix.governator.providers.ProvidesWithAdvice;
 
@@ -42,26 +44,23 @@ final class InternalArchaiusModule extends AbstractModule {
     
     @ProvidesWithAdvice
     @Singleton
-    DefaultConfigManager.Builder getConfigManagerBuilder(
-            @Raw DefaultConfigManager configManager, 
-            @RuntimeLayer SettableConfig settableConfig) {
-        return DefaultConfigManager.builder(configManager)
-            .addConfigToLayer(Layers.ENVIRONMENT, "", EnvironmentConfig.INSTANCE)
-            .addConfigToLayer(Layers.SYSTEM,      "", SystemConfig.INSTANCE)
-            .addConfigToLayer(Layers.OVERRIDE,    "", settableConfig)
-            ;
+    LayeredPropertySource getPropertySource() {
+        LayeredPropertySource source = new LayeredPropertySource("root");
+        source.addPropertySource(Layers.ENVIRONMENT, EnvironmentPropertySource.INSTANCE);
+        source.addPropertySource(Layers.SYSTEM, SystemPropertySource.INSTANCE);
+        return source;
     }
     
     @Provides
     @Singleton
-    ConfigManager getConfigManager(DefaultConfigManager.Builder builder) {
-        return builder.build();
+    Configuration getConfiguration(LayeredPropertySource propertySource) {
+        return new PropertySourceConfiguration(propertySource);
     }
     
     @Provides
     @Singleton
-    Config getConfiguration(ConfigManager config) {
-        return config;
+    Config getConfiguration(Configuration configuration) {
+        return new ConfigurationToConfigAdapter(configuration);
     }
     
     @Provides
@@ -73,12 +72,6 @@ final class InternalArchaiusModule extends AbstractModule {
     
     @Provides
     @Singleton
-    Decoder getDecoder(ConfigManager config) {
-        return config.getDecoder();
-    }
-
-    @Provides
-    @Singleton
     PropertyFactory getPropertyFactory(Config config) {
         return DefaultPropertyFactory.from(config);
     }
@@ -87,14 +80,6 @@ final class InternalArchaiusModule extends AbstractModule {
     @Singleton
     ConfigProxyFactory getProxyFactory(Config config, Decoder decoder, PropertyFactory factory) {
         return new ConfigProxyFactory(config, decoder, factory);
-    }
-
-    @Provides
-    @Singleton
-    @Raw
-    @Deprecated
-    DefaultConfigManager getRawConfig() {
-        return new DefaultConfigManager();
     }
 
     @Override

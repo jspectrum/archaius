@@ -1,5 +1,8 @@
 package com.netflix.archaius.guice;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -12,30 +15,50 @@ import com.google.inject.ProvisionException;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
 import com.netflix.archaius.ConfigMapper;
-import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.ConfigManager;
+import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.IoCContainer;
 import com.netflix.archaius.api.Layers;
+import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.exceptions.ConfigException;
+import com.netflix.archaius.interpolate.CommonsStrInterpolator;
+import com.netflix.archaius.sources.LayeredPropertySource;
 
 @Singleton
 public class ConfigurationInjectingListener implements ProvisionListener {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationInjectingListener.class);
     
     @Inject
-    private Config            config;
+    private Injector injector;
     
     @Inject
-    private Injector          injector;
+    private Configuration config;
     
     @Inject
-    private ConfigManager    archaius;
+    private CascadeStrategy cascadeStrategy;
+    
+    private LayeredPropertySource propertySource;
+    
+    private StrInterpolator interpolator;
+    
+    @Inject
+    private void setLayeredPropertySource(LayeredPropertySource propertySource) {
+        this.propertySource = propertySource;
+        StrInterpolator.Lookup lookup = key -> delegate.getProperty(key).map(Object::toString).orElse(null);
+        this.interpolator = value -> {
+            if (value.getClass() == String.class) {
+                return CommonsStrInterpolator.INSTANCE.create(lookup).resolve((String)value);
+            }
+            return value;
+        };
+    }    
     
     @Inject
     public static void init(ConfigurationInjectingListener listener) {
         LOG.info("Initializing ConfigurationInjectingListener");
+        
+
     }
     
     private ConfigMapper mapper = new ConfigMapper();
@@ -54,11 +77,21 @@ public class ConfigurationInjectingListener implements ProvisionListener {
                 return;
             }
             
+            Arrays.asList(source.value()).forEach(bundleName -> {
+                LOG.debug("Trying to loading configuration bundle {}", bundleName);
+                    Stream.of(source.cascading() != ConfigurationSource.NullCascadeStrategy.class
+                            ? injector.getInstance(source.cascading())
+                            : cascadeStrategy)
+                        .flatMap(strategy -> strategy.generate(bundleName, , lookup));
+                            
+                    });
+            });
             for (String resourceName : source.value()) {
-                LOG.debug("Trying to loading configuration resource {}", resourceName);
+                
                 
                 try {
-                    archaius.addResourceToLayer(Layers.LIBRARIES, resourceName, loader -> {
+                    
+                    propertySource.addPropertySource(Layers.LIBRARIES, resourceName, loader -> {
                         if (source.cascading() != ConfigurationSource.NullCascadeStrategy.class) {
                             loader.withCascadeStrategy(injector.getInstance(source.cascading()));
                         }

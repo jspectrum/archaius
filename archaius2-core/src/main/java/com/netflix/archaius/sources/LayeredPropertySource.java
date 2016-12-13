@@ -15,6 +15,14 @@ import com.netflix.archaius.api.Layer;
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.internal.WeakReferenceSet;
 
+/**
+ * 
+ * TODO: Remove PropertySource
+ * TODO: List Layers
+ * TODO: Set property?
+ * TODO: Get config names
+ * TODO: ConfigLoader?
+ */
 public class LayeredPropertySource extends DelegatingPropertySource {
 
     public LayeredPropertySource(String name) {

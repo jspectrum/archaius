@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.netflix.archaius.PropertySourceBasedConfiguration;
+import com.netflix.archaius.PropertySourceConfiguration;
 import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
@@ -41,7 +41,7 @@ public class PropertySourceBasedConfigurationTest {
                 .put("foo.map.a3", "${value}")
                 .build();
         
-        PropertySourceBasedConfiguration configuration = new PropertySourceBasedConfiguration(source);
+        PropertySourceConfiguration configuration = new PropertySourceConfiguration(source);
         Foo foo = configuration.get("foo", Foo.class).get();
 
 //        foo.onString((newValue) -> do something);

@@ -14,13 +14,13 @@ import com.netflix.archaius.node.PropertySourcePropertyNode;
 import com.netflix.archaius.node.ResolverLookupImpl;
 import com.netflix.archaius.sources.InterpolatingPropertySource;
 
-public class PropertySourceBasedConfiguration implements Configuration {
+public class PropertySourceConfiguration implements Configuration {
 
     private final ResolverLookup lookup;
     private final PropertySource source;
     private final PropertySource interpolated;
     
-    public PropertySourceBasedConfiguration(PropertySource source) {
+    public PropertySourceConfiguration(PropertySource source) {
         this.interpolated = new InterpolatingPropertySource(source);
         this.source = source;
         this.lookup = new ResolverLookupImpl();
