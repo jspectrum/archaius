@@ -4,8 +4,8 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.Bundle;
+import com.netflix.archaius.api.PropertySource;
 
 public class PropertySourceFactoryTest {
     @Test
@@ -16,7 +16,7 @@ public class PropertySourceFactoryTest {
         
         PropertySourceFactory factory = new PropertySourceFactory(source);
         
-        PropertySource loaded = factory.create(new Bundle("libA", (name) -> {
+        PropertySource loaded = factory.apply(new Bundle("libA", (name) -> {
             return Arrays.asList(name, name + "-${env}");
         }));
         

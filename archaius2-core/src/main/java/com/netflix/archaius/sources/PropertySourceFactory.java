@@ -20,51 +20,54 @@ import com.netflix.archaius.sources.properties.PropertiesToPropertySource;
 import com.netflix.archaius.sources.yaml.YamlToPropertySource;
 
 /**
- * Factory for returning a PropertySource for a resource {@link Bundle}.  The returned PropertySource
- * will contain properties from all found cascade resource name variants interpolated using the property
- * PropertySource, for all supported formats.  Note that if multiple files exist, all will be loaded.
+ * Function for loading a PropertySource for a resource {@link Bundle}.  The returned PropertySource
+ * will contain properties from all found cascade resource name variants for all supported formats. 
+ * Note that if multiple files exist, all will be loaded.
  */
-public class PropertySourceFactory {
+public class PropertySourceFactory implements Function<Bundle, PropertySource> {
     private static final Logger LOG = LoggerFactory.getLogger(PropertySourceFactory.class);
     
-    private Map<String, Function<URL, PropertySource>> factories = new HashMap<>();
+    private Map<String, Function<URL, PropertySource>> extensionToFactory = new HashMap<>();
     private List<Function<String, List<URL>>> urlResolvers = new ArrayList<>();
     private Function<String, String> interpolator;
     
     public PropertySourceFactory(PropertySource source) {
-        factories.put("properties", new PropertiesToPropertySource());
-        factories.put("yml", new YamlToPropertySource(source));
+        // Supported file formats
+        extensionToFactory.put("properties", new PropertiesToPropertySource());
+        extensionToFactory.put("yml",        new YamlToPropertySource(source));
         
-        urlResolvers.add((name) -> {
+        // Resolvers from name to URL
+        urlResolvers.add(name -> {
             try {
                 return Collections.list(ClassLoader.getSystemResources(name));
             } catch (Exception e) {
                 return Collections.emptyList();
             }
         });
-        
+
+        // Interpolator for cascade loading
         StrInterpolator.Lookup lookup = key -> source.getProperty(key).map(Object::toString).orElse(null);
         this.interpolator = value -> CommonsStrInterpolator.INSTANCE.create(lookup).resolve((String)value);
     }
     
-    public PropertySource create(Bundle bundle) {
+    @Override
+    public PropertySource apply(Bundle bundle) {
         return new CompositePropertySource(
             bundle.getName(), 
             bundle.getCascadeGenerator().apply(bundle.getName()).stream()
                 // All resource name variants (without extension)
-                .flatMap((String name) -> factories.entrySet().stream()
+                .flatMap(name -> extensionToFactory.entrySet().stream()
                     // All supported file formats
-                    .flatMap((entry) -> urlResolvers.stream()
+                    .flatMap(factory -> urlResolvers.stream()
                         // Load each file
-                        .flatMap((resolver) -> {
-                            String interpolated = interpolator.apply(name + "." + entry.getKey());
-                            LOG.info("Loading url {}", interpolated);
-                            return resolver.apply(interpolated).stream()
-                                .map(url -> entry.getValue().apply(url));
+                        .flatMap(resolver -> {
+                            String interpolatedUrl = interpolator.apply(name + "." + factory.getKey());
+                            LOG.info("Loading url {}", interpolatedUrl);
+                            return resolver.apply(interpolatedUrl).stream()
+                                .map(url -> factory.getValue().apply(url));
                         })
                     )
                 )
-                .filter(s -> s != null)
                 .collect(Collectors.toList()));
     }
 }

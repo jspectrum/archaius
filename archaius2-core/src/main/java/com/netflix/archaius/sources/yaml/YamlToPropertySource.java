@@ -130,12 +130,19 @@ public class YamlToPropertySource implements Function<URL, PropertySource> {
             });
                     
             return builder.build();
-            
         } catch (IOException e) {
             throw new RuntimeException("Failed to load properties from " + t.toExternalForm());
         }
     }
     
+    /**
+     * Recursively traverse a path in the YAML calling the consumer when a leaf is reached
+     * 
+     * @param propertyName
+     * @param key
+     * @param obj
+     * @param consumer
+     */
     void traverse(String propertyName, String key, Object obj, BiConsumer<String, Object> consumer) {
         String newName = propertyName.isEmpty() ? key : propertyName + "." + key;
         if (obj instanceof Map) {

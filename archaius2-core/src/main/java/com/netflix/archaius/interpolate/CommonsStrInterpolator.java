@@ -36,11 +36,6 @@ public final class CommonsStrInterpolator implements StrInterpolator {
                   }
               }, "${", "}", '$').setValueDelimiter(":");
 
-        return new Context() {
-            @Override
-            public String resolve(String value) {
-                return sub.replace(value);
-            }
-        };
+        return str -> sub.replace(str);
     }
 }
