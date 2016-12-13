@@ -7,9 +7,9 @@ import java.util.List;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
-import com.netflix.archaius.api.Configuration;
 import com.netflix.archaius.api.Decoder;
 import com.netflix.archaius.api.StrInterpolator;
+import com.netflix.config.api.Configuration;
 
 /**
  */

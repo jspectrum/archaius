@@ -17,13 +17,13 @@ import com.google.inject.spi.ProvisionListener;
 import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.IoCContainer;
-import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.StrInterpolator;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.interpolate.CommonsStrInterpolator;
 import com.netflix.archaius.sources.LayeredPropertySource;
+import com.netflix.config.api.Layers;
 
 @Singleton
 public class ConfigurationInjectingListener implements ProvisionListener {

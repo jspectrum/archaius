@@ -7,6 +7,8 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.netflix.config.sources.properties.PropertiesToPropertySource;
+
 public class PropertiesTest {
     @Test
     public void loadExisting() {

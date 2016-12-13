@@ -33,7 +33,6 @@ import com.netflix.archaius.ConfigMapper;
 import com.netflix.archaius.ConfigProxyFactory;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigManager;
-import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.Property;
 import com.netflix.archaius.api.annotations.Configuration;
 import com.netflix.archaius.api.annotations.ConfigurationSource;
@@ -44,6 +43,7 @@ import com.netflix.archaius.cascade.ConcatCascadeStrategy;
 import com.netflix.archaius.config.MapConfig;
 import com.netflix.archaius.exceptions.MappingException;
 import com.netflix.archaius.visitor.PrintStreamVisitor;
+import com.netflix.config.api.Layers;
 
 public class ArchaiusModuleTest {
     

@@ -18,11 +18,11 @@ import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigLoader;
 import com.netflix.archaius.api.ConfigManager;
-import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.LibrariesLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.config.api.Layers;
 import com.netflix.governator.providers.Advises;
 
 public final class LegacyInternalArchaiusModule extends AbstractModule {

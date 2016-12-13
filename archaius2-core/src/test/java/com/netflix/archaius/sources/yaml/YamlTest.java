@@ -7,8 +7,9 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.sources.ImmutablePropertySource;
+import com.netflix.config.api.PropertySource;
+import com.netflix.config.sources.ImmutablePropertySource;
+import com.netflix.config.sources.yaml.YamlToPropertySource;
 
 public class YamlTest {
     @Test

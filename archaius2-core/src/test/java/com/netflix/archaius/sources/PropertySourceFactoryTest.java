@@ -4,8 +4,10 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.netflix.archaius.api.Bundle;
-import com.netflix.archaius.api.PropertySource;
+import com.netflix.config.api.Bundle;
+import com.netflix.config.api.PropertySource;
+import com.netflix.config.sources.ImmutablePropertySource;
+import com.netflix.config.sources.PropertySourceFactory;
 
 public class PropertySourceFactoryTest {
     @Test

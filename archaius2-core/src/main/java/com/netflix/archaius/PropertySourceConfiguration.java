@@ -6,13 +6,13 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Optional;
 
-import com.netflix.archaius.api.Configuration;
-import com.netflix.archaius.api.PropertyNode;
-import com.netflix.archaius.api.PropertyNode.ResolverLookup;
-import com.netflix.archaius.api.PropertySource;
-import com.netflix.archaius.node.PropertySourcePropertyNode;
-import com.netflix.archaius.node.ResolverLookupImpl;
-import com.netflix.archaius.sources.InterpolatingPropertySource;
+import com.netflix.config.api.Configuration;
+import com.netflix.config.api.PropertyNode;
+import com.netflix.config.api.PropertySource;
+import com.netflix.config.api.PropertyNode.ResolverLookup;
+import com.netflix.config.resolver.ResolverLookupImpl;
+import com.netflix.config.sources.InterpolatingPropertySource;
+import com.netflix.config.sources.PropertySourcePropertyNode;
 
 public class PropertySourceConfiguration implements Configuration {
 

@@ -30,9 +30,9 @@ import com.google.inject.name.Names;
 import com.netflix.archaius.DefaultConfigManager;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
-import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
+import com.netflix.config.api.Layers;
 import com.netflix.governator.providers.Advises;
 
 /**

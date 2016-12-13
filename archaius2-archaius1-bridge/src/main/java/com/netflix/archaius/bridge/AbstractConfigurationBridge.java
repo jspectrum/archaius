@@ -15,7 +15,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigManager;
-import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.config.SettableConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.api.inject.RuntimeLayer;
@@ -26,6 +25,7 @@ import com.netflix.config.AggregatedConfiguration;
 import com.netflix.config.DeploymentContext;
 import com.netflix.config.DynamicPropertySupport;
 import com.netflix.config.PropertyListener;
+import com.netflix.config.api.Layers;
 
 /**
  * @see StaticArchaiusBridgeModule

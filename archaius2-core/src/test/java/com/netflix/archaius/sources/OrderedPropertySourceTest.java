@@ -6,8 +6,11 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.netflix.archaius.api.Layers;
-import com.netflix.archaius.api.PropertySource;
+import com.netflix.config.api.Layers;
+import com.netflix.config.api.PropertySource;
+import com.netflix.config.sources.ImmutablePropertySource;
+import com.netflix.config.sources.LayeredPropertySource;
+import com.netflix.config.sources.MutablePropertySource;
 
 public class OrderedPropertySourceTest {
     private static final PropertySource override = ImmutablePropertySource.builder()

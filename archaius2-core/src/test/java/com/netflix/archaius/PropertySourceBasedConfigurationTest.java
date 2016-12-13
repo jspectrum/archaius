@@ -6,10 +6,10 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.netflix.archaius.PropertySourceConfiguration;
-import com.netflix.archaius.api.PropertySource;
 import com.netflix.archaius.api.annotations.DefaultValue;
 import com.netflix.archaius.api.annotations.PropertyName;
-import com.netflix.archaius.sources.ImmutablePropertySource;
+import com.netflix.config.api.PropertySource;
+import com.netflix.config.sources.ImmutablePropertySource;
 
 public class PropertySourceBasedConfigurationTest {
     public static interface Foo {

@@ -6,10 +6,10 @@ import java.util.LinkedHashMap;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigManager;
-import com.netflix.archaius.api.Layers;
 import com.netflix.archaius.api.config.CompositeConfig;
 import com.netflix.archaius.api.exceptions.ConfigException;
 import com.netflix.archaius.config.AbstractConfig;
+import com.netflix.config.api.Layers;
 
 class LegacyLibraryLayerCompositeConfig extends AbstractConfig implements CompositeConfig {
 
