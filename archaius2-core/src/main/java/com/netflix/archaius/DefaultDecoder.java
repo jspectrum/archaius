@@ -37,6 +37,17 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.io.File;
+import java.net.URI;
+import java.net.URL;
+import java.net.InetAddress;
+import java.nio.charset.Charset;
+import java.util.regex.Pattern;
+import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.text.MessageFormat;
+import java.text.ChoiceFormat;
+import java.text.DecimalFormat;
 
 import javax.inject.Singleton;
 import javax.xml.bind.DatatypeConverter;
@@ -67,14 +78,14 @@ public class DefaultDecoder implements Decoder {
 
         });
         decoderRegistry.put(Boolean.class, decoderRegistry.get(boolean.class));
-        decoderRegistry.put(Integer.class, Integer::valueOf);
-        decoderRegistry.put(int.class, Integer::valueOf);
-        decoderRegistry.put(long.class, Long::valueOf);
-        decoderRegistry.put(Long.class, Long::valueOf);
-        decoderRegistry.put(short.class, Short::valueOf);
-        decoderRegistry.put(Short.class, Short::valueOf);
-        decoderRegistry.put(byte.class, Byte::valueOf);
-        decoderRegistry.put(Byte.class, Byte::valueOf);
+        decoderRegistry.put(Integer.class, Integer::decode);
+        decoderRegistry.put(int.class, Integer::decode);
+        decoderRegistry.put(long.class, Long::decode);
+        decoderRegistry.put(Long.class, Long::decode);
+        decoderRegistry.put(short.class, Short::decode);
+        decoderRegistry.put(Short.class, Short::decode);
+        decoderRegistry.put(byte.class, Byte::decode);
+        decoderRegistry.put(Byte.class, Byte::decode);
         decoderRegistry.put(double.class, Double::valueOf);
         decoderRegistry.put(Double.class, Double::valueOf);
         decoderRegistry.put(float.class, Float::valueOf);
@@ -95,6 +106,36 @@ public class DefaultDecoder implements Decoder {
         decoderRegistry.put(Date.class, v->new Date(Long.parseLong(v)));
         decoderRegistry.put(Currency.class, Currency::getInstance);
         decoderRegistry.put(BitSet.class, v->BitSet.valueOf(DatatypeConverter.parseHexBinary(v)));
+        //  add more types
+        decoderRegistry.put(File.class, s->new File(s));
+        decoderRegistry.put(Charset.class, s->Charset.forName(s));
+        decoderRegistry.put(Pattern.class, s->Pattern.compile(s));
+        decoderRegistry.put(UUID.class, s->UUID.fromString(s));
+        decoderRegistry.put(SimpleDateFormat.class, s->new SimpleDateFormat(s));
+        decoderRegistry.put(MessageFormat.class, s->new MessageFormat(s));
+        decoderRegistry.put(ChoiceFormat.class, s->new ChoiceFormat(s));
+        decoderRegistry.put(DecimalFormat.class, s->new DecimalFormat(s));
+        decoderRegistry.put(URI.class, s-> {
+            try { 
+                return new URI(s);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        decoderRegistry.put(URL.class, s-> {
+            try { 
+                return new URL(s);
+            } catch (Exception e) { 
+                throw new RuntimeException(e);
+            }
+        });
+        decoderRegistry.put(InetAddress.class, s-> {
+            try { 
+                return InetAddress.getByName(s);
+            } catch (Exception e) { 
+                throw new RuntimeException(e);
+            }
+        });
     }
     
     

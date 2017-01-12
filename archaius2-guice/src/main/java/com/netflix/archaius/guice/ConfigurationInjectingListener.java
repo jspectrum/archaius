@@ -1,5 +1,8 @@
 package com.netflix.archaius.guice;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
@@ -97,6 +100,16 @@ public class ConfigurationInjectingListener implements ProvisionListener {
                     @Override
                     public <T> T getInstance(String name, Class<T> type) {
                         return injector.getInstance(Key.get(type, Names.named(name)));
+                    }
+
+                    @Override
+                    public boolean doInject(Field  field) {
+                        return ((field.getAnnotation(javax.inject.Inject.class) != null) || (field.getAnnotation(com.google.inject.Inject.class) != null));
+                    }
+
+                    @Override
+                    public boolean doInject(Method  method) {
+                        return ((method.getAnnotation(javax.inject.Inject.class) != null) || (method.getAnnotation(com.google.inject.Inject.class) != null));
                     }
                 });
             }

@@ -21,6 +21,8 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import org.apache.commons.lang3.text.StrSubstitutor;
 
 import com.netflix.archaius.api.Config;
@@ -34,6 +36,16 @@ public class ConfigMapper {
         @Override
         public <T> T getInstance(String name, Class<T> type) {
             return null;
+        }
+
+        @Override
+        public boolean doInject(Field  field) {
+            return false;
+        }
+
+        @Override
+        public boolean doInject(Method  method) {
+            return false;
         }
     };
     
@@ -111,6 +123,11 @@ public class ConfigMapper {
                 
                 String name = field.getName();
                 Class<?> type = field.getType();
+
+                if (ioc.doInject(field)) {
+                    continue;
+                }
+
                 Object value = null;
                 if (type.isInterface()) {
                     // TODO: Do Class.newInstance() if objName is a classname
@@ -158,6 +175,10 @@ public class ConfigMapper {
                     continue;
                 }
     
+                if (ioc.doInject(method)) {
+                    continue;
+                }
+
                 method.setAccessible(true);
                 Class<?> type = method.getParameterTypes()[0];
                 Object value = null;

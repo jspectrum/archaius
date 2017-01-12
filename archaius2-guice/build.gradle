@@ -19,8 +19,8 @@ apply plugin: 'java'
 dependencies {
     compile  project(':archaius2-core')
     compile  'javax.inject:javax.inject:1'
-    compile  'com.google.inject:guice:4.0'
-    compile  'com.google.inject.extensions:guice-multibindings:4.0'
+    compile  'com.google.inject:guice:4.1.+'
+    compile  'com.google.inject.extensions:guice-multibindings:4.1.+'
 }
 
 eclipse {

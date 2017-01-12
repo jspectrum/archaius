@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.lang.reflect.Array;
 
 import com.netflix.archaius.api.Config;
 import com.netflix.archaius.api.ConfigListener;
@@ -232,11 +233,92 @@ public abstract class AbstractConfig implements Config {
         if (rawProp == null) {
             return notFound(key);
         }
-        if (rawProp instanceof String) {
+        if (type.isArray()) {
+            Class<?>  componentType = type.getComponentType();
+
+            try {
+                if (componentType.isPrimitive()) {
+                    if (boolean.class.isAssignableFrom(componentType)) {
+                        List<Boolean>  list = getList(key, Boolean.class);
+                        boolean[]  res = new boolean[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).booleanValue();
+
+                        return (T) res;
+                    } else if (byte.class.isAssignableFrom(componentType)) {
+                        List<Byte>  list = getList(key, Byte.class);
+                        byte[]  res = new byte[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).byteValue();
+
+                        return (T) res;
+                    } else if (char.class.isAssignableFrom(componentType)) {
+                        List<Character>  list = getList(key, Character.class);
+                        char[]  res = new char[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).charValue();
+
+                        return (T) res;
+                    } else if (double.class.isAssignableFrom(componentType)) {
+                        List<Double>  list = getList(key, Double.class);
+                        double[]  res = new double[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).doubleValue();
+
+                        return (T) res;
+                    } else if (float.class.isAssignableFrom(componentType)) {
+                        List<Float>  list = getList(key, Float.class);
+                        float[]  res = new float[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).floatValue();
+
+                        return (T) res;
+                    } else if (int.class.isAssignableFrom(componentType)) {
+                        List<Integer>  list = getList(key, Integer.class);
+                        int[]  res = new int[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).intValue();
+
+                        return (T) res;
+                    } else if (long.class.isAssignableFrom(componentType)) {
+                        List<Long>  list = getList(key, Long.class);
+                        long[]  res = new long[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).longValue();
+
+                        return (T) res;
+                    } else if (short.class.isAssignableFrom(componentType)) {
+                        List<Short>  list = getList(key, Short.class);
+                        short[]  res = new short[list.size()];
+
+                        for (int  i = 0; i < list.size(); i++)
+                            res[i] = list.get(i).shortValue();
+
+                        return (T) res;
+                    } else {
+                        return parseError(key, rawProp.toString(), new ClassNotFoundException(componentType.toString()));
+                    }
+                } else {
+                    List<?>  list = getList(key, componentType);
+                    Object[]  res = (Object[]) Array.newInstance(componentType, list.size());
+
+                    return (T) list.toArray(res);
+                }
+            } catch (Exception e) {
+                return parseError(key, rawProp.toString(), e);
+            }
+        } else if (rawProp instanceof String) {
             try {
                 String value = interpolator.create(getLookup()).resolve(rawProp.toString());
                 return decoder.decode(type, value);
-            } catch (NumberFormatException e) {
+            } catch (Exception e) {
                 return parseError(key, rawProp.toString(), e);
             }
         } else if (type.isInstance(rawProp)) {

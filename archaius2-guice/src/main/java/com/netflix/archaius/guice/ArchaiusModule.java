@@ -23,6 +23,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.netflix.archaius.api.CascadeStrategy;
 import com.netflix.archaius.api.Config;
+import com.netflix.archaius.api.ConfigReader;
 import com.netflix.archaius.api.inject.DefaultLayer;
 import com.netflix.archaius.api.inject.RemoteLayer;
 import com.netflix.archaius.config.MapConfig;
@@ -35,27 +36,35 @@ import com.netflix.archaius.config.MapConfig;
  * <li>Injectable Config</li>
  * <li>Configuration Proxy</li>
  * <li>Configuration mapping</li>
- * </uL>
+ * </ul>
  * 
+ * <p>
  * This module creates an injectable Config instance that has the following override structure in
  * order of precedence. 
  * 
- *  RUNTIME     - properties set from code
- *  REMOTE      - properties loaded from a remote source
- *  SYSTEM      - System properties
- *  ENVIRONMENT - Environment properties
- *  APPLICATION - Configuration loaded by the application
- *  LIBRARIES   - Configuration loaded by libraries used by the application
- *  DEFAULT     - Default properties driven by bindings
+ *  <ul>
+ *  <li>RUNTIME     - properties set from code</li>
+ *  <li>REMOTE      - properties loaded from a remote source</li>
+ *  <li>SYSTEM      - System properties</li>
+ *  <li>ENVIRONMENT - Environment properties</li>
+ *  <li>APPLICATION - Configuration loaded by the application</li>
+ *  <li>LIBRARIES   - Configuration loaded by libraries used by the application</li>
+ *  <li>DEFAULT     - Default properties driven by bindings</li>
+ *  </ul>
+ *  </p>
  * 
+ * <p>
  * Runtime properties may be set in code by injecting and calling one of the setXXX methods of,
  *  {@literal @}RuntimeLayer SettableConfig config
+ * </p>
  *  
+ * <p>
  * A remote configuration may be specified by binding to {@literal @}RemoteLayer Config
  * When setting up a remote configuration that needs access to Archaius's Config
  * make sure to inject the qualified {@literal @}Raw Config otherwise the injector will fail
  * with a circular dependency error.  Note that the injected config will have 
  * system, environment and application properties loaded into it.
+ * </p>
  * 
  * <code>
  * public class FooRemoteModule extends ArchaiusModule {
@@ -217,8 +226,8 @@ public class ArchaiusModule extends AbstractModule {
      * 
      * @return LinkedBindingBuilder to which the implementation is set
      */
-    protected LinkedBindingBuilder<Config> bindConfigReader() {
-        return Multibinder.newSetBinder(binder(), Config.class, DefaultLayer.class).addBinding();
+    protected LinkedBindingBuilder<ConfigReader> bindConfigReader() {
+        return Multibinder.newSetBinder(binder(), ConfigReader.class).addBinding();
     }
 
     /**

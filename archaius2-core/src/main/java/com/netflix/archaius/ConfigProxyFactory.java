@@ -38,18 +38,18 @@ import javax.inject.Inject;
 /**
  * Factory for binding a configuration interface to properties in a {@link PropertyFactory}
  * instance.  Getter methods on the interface are mapped by naming convention
- * by the property name may be overridden using the @PropertyName annotation.
+ * by the property name may be overridden using the {@link PropertyName} annotation.
  * 
  * For example,
  * <pre>
- * {@code 
+ * <code>
  * {@literal @}Configuration(prefix="foo")
  * interface FooConfiguration {
  *    int getTimeout();     // maps to "foo.timeout"
  *    
  *    String getName();     // maps to "foo.name"
  * }
- * }
+ * </code>
  * </pre>
  * 
  * Default values may be set by adding a {@literal @}DefaultValue with a default value string.  Note
@@ -59,36 +59,38 @@ import javax.inject.Inject;
  * 
  * For example,
  * <pre>
- * {@code
+ * <code>
  * {@literal @}Configuration(prefix="foo")
  * interface FooConfiguration {
- *    @DefaultValue("1000")
- *    int getReadTimeout();     // maps to "foo.timeout"
+ *    // maps to "foo.timeout"
+ *    {@literal @}DefaultValue("1000")
+ *    int getReadTimeout();
  *    
  *    default int getWriteTimeout() {
  *        return 1000;
  *    }
  * }
- * }
+ * </code>
+ * </pre>
  * 
  * To create a proxy instance,
  * <pre>
- * {@code 
+ * <code>
  * FooConfiguration fooConfiguration = configProxyFactory.newProxy(FooConfiguration.class);
- * }
+ * </code>
  * </pre>
  * 
  * To override the prefix in {@literal @}Configuration or provide a prefix when there is no 
- * @Configuration annotation simply pass in a prefix in the call to newProxy.
+ * {@literal @}Configuration annotation simply pass in a prefix in the call to newProxy.
  * 
  * <pre>
- * {@code 
+ * <code>
  * FooConfiguration fooConfiguration = configProxyFactory.newProxy(FooConfiguration.class, "otherprefix.foo");
- * }
+ * </code>
  * </pre>
  * 
  * By default all properties are dynamic and can therefore change from call to call.  To make the
- * configuration static set the immutable attributes of @Configuration to true.
+ * configuration static set the immutable attributes of {@literal @}Configuration to true.
  * 
  * Note that an application should normally have just one instance of ConfigProxyFactory
  * and PropertyFactory since PropertyFactory caches {@link com.netflix.archaius.api.Property} objects.
@@ -261,7 +263,7 @@ public class ConfigProxyFactory {
                     if (nameAnnot == null) {
                         throw new IllegalArgumentException("Missing @PropertyName annotation on " + m.getDeclaringClass().getName() + "#" + m.getName());
                     }
-                    invokers.put(m, createParameterizedProperty(returnType, propName, nameAnnot.name(), defaultValue));
+                    invokers.put(m, createParameterizedProperty(returnType, prefix, propName, nameAnnot.name(), defaultValue));
                 } else if (immutable) {
                     invokers.put(m, createImmutablePropertyWithDefault(returnType, propName, defaultValue));
                 } else {
@@ -433,7 +435,7 @@ public class ConfigProxyFactory {
         };
     }
     
-    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String propName, final String nameAnnot, Object defaultValue) {
+    protected <T> MethodInvoker<T> createParameterizedProperty(final Class<T> returnType, final String prefix, final String propName, final String nameAnnot, Object defaultValue) {
         return new MethodInvoker<T>() {
             @Override
             public T invoke(Object obj, Object[] args) {
@@ -447,7 +449,7 @@ public class ConfigProxyFactory {
                 for (int i = 0; i < args.length; i++) {
                     values.put("" + i, args[i]);
                 }
-                String propName = new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot);
+                String propName = prefix + new StrSubstitutor(values, "${", "}", '$').replace(nameAnnot);
                 return getPropertyWithDefault(returnType, propName, (T)defaultValue);
             }
 
