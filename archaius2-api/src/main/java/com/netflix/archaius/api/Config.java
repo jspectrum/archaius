@@ -19,15 +19,14 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Core API for reading a configuration.  The API is read only.
- * 
- * @author elandau
  */
-public interface Config {
+public interface Config extends PropertySource {
     public interface Visitor<T> {
-        T visitKey(Config config, String key);
+        T visitKey(String key, Object value);
     }
     
     /**
@@ -50,6 +49,8 @@ public interface Config {
      * @param key
      */
     Object getRawProperty(String key);
+    
+    default Optional<Object> getProperty(String key) { return Optional.ofNullable(getRawProperty(key)); }
     
     /**
      * Parse the property as a long.
@@ -122,11 +123,6 @@ public interface Config {
     boolean containsKey(String key);
     
     /**
-     * @return True if empty or false otherwise.
-     */
-    boolean isEmpty();
-    
-    /**
      * @return Return an iterator to all property names owned by this config
      */
     Iterator<String> getKeys();
@@ -164,4 +160,12 @@ public interface Config {
      * @param visitor
      */
     <T> T accept(Visitor<T> visitor);
+    
+    default String resolve(String value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default <T> T resolve(String value, Class<T> type) {
+        throw new UnsupportedOperationException();
+    }
 }
